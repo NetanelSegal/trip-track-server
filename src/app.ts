@@ -3,7 +3,6 @@ import path from 'path';
 import cors from 'cors';
 import './db/mongo-connect';
 import { Logger } from './utils/Logger';
-import { UserModel } from './models/user.model';
 import { AppError } from './utils/AppError';
 
 const app = express();
