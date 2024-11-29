@@ -1,3 +1,5 @@
+import { AppError } from './AppError';
+
 export class Logger {
   private static colorize(text: string, colorCode: string): string {
     return `\x1b[${colorCode}m${text}\x1b[0m`;
@@ -9,10 +11,24 @@ export class Logger {
     colorCode: string
   ): string {
     const coloredPrefix = this.colorize(prefix, colorCode);
-    const formattedMessage =
-      typeof message === 'object'
-        ? `\n${JSON.stringify(message, null, 2)}`
-        : ` ${message}`;
+
+    if (typeof message === 'string') {
+      return `${coloredPrefix}${message}`;
+    }
+
+    let objToStringify: Record<string, unknown> = {};
+
+    if (typeof message === 'object') {
+      objToStringify = { ...message };
+
+      if (message instanceof Error) {
+        objToStringify.message = message.message;
+        objToStringify.stack = message.stack;
+      }
+    }
+
+    const formattedMessage = `\n${JSON.stringify(objToStringify, null, 2)}`;
+
     return `${coloredPrefix}${formattedMessage}`;
   }
 
