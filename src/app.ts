@@ -1,10 +1,10 @@
 import express, { NextFunction, Request, Response } from 'express';
 import path from 'path';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import './db/mongo-connect';
 import { Logger } from './utils/Logger';
-dotenv.config();
+import { UserModel } from './models/user.model';
+import { AppError } from './utils/AppError';
 
 const app = express();
 
@@ -17,14 +17,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-app.get('/health', async (req, res) => {
+app.get('/health', async (req: Request, res: Response) => {
   res.send('OK');
 });
 
-app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  Logger.error(
-    `${req.method}:${req.originalUrl}, failed with [${err.name}]:${err.message}`
-  );
+app.use((err: AppError, req: Request, res: Response, _next: NextFunction) => {
+  Logger.error(err);
   res.status(500).json({ message: err.message, title: err.name });
 });
 
