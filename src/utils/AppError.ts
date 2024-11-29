@@ -1,15 +1,16 @@
 export class AppError extends Error {
   statusCode: number;
-  errorFrom: string;
+  source: string;
   constructor(
-    message: string,
-    statusCode = 400,
-    errorFrom: string = 'Not found'
+    name: string = 'AppError',
+    message: string = 'internal server error',
+    statusCode = 500,
+    source: string = 'unknown'
   ) {
     super(message);
     this.statusCode = statusCode;
-    this.errorFrom = errorFrom;
-    this.name = 'AppError';
+    this.source = source;
+    this.name = name;
 
     Error.captureStackTrace(this, this.constructor);
   }
