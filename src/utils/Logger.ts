@@ -1,5 +1,3 @@
-import { AppError } from './AppError';
-
 export class Logger {
   private static colorize(text: string, colorCode: string): string {
     return `\x1b[${colorCode}m${text}\x1b[0m`;
