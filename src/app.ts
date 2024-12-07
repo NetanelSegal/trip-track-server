@@ -3,6 +3,7 @@ import path from 'path';
 import cors from 'cors';
 import './db/mongo-connect';
 import { indexRouter } from './routes/index.route';
+import { Logger } from './utils/Logger';
 
 const app = express();
 
@@ -15,5 +16,5 @@ app.use(indexRouter);
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`server is up on: http://localhost:${PORT}`);
+  Logger.success(`server is up on: http://localhost:${PORT}`);
 });
