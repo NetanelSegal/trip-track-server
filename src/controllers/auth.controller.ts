@@ -33,11 +33,16 @@ export const sendCode = async (
     const sendEmailres = await sendEmail({
       to: req.body.email,
       subject: 'test',
-      text: `test`,
+      text: `your verification code is ${code}`,
       html: html,
     });
 
     res.status(sendEmailres[0].statusCode || 202).json({
+      message: 'code sent successfully',
+    });
+
+    res.status(202).json({
+      code,
       message: 'code sent successfully',
     });
   } catch (error) {
