@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { authRouter } from './auth.route';
 import { Logger } from '../utils/Logger';
-import { AppError, ValidationError } from '../utils/AppError';
+import { AppError } from '../utils/AppError';
 
 const router = Router();
 

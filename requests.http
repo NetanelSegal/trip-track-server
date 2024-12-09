@@ -21,23 +21,11 @@ Content-Type: application/json
 
 {
     "email":"segal.netanel4@gmail.com",
-    "code":"760876"
+    "code":"533269"
 }
+
 
 ###
 
-POST http://localhost:3000/auth/test HTTP/1.1
+GET http://localhost:3000/auth/validate-token HTTP/1.1
 Content-Type: application/json
-
-{
-    "name":"some name",
-    "age":50,
-    "address":{
-        "street":"asd",
-        "state":"asd",
-        "city":{
-            "name": "aaa"
-        }
-    },
-    "code":"asd"
-}

@@ -1,5 +1,5 @@
 import { ZodSchema } from 'zod';
-import { AppError, ValidationError } from '../utils/AppError';
+import { ValidationError } from '../utils/AppError';
 import { Request } from 'express';
 import { NextFunction, Response } from 'express-serve-static-core';
 import { getErrorsFromIssues } from '../utils/zod.utils';
