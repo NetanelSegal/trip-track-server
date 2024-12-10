@@ -12,10 +12,12 @@ export function validateRequest<T>(schema: ZodSchema<T>) {
       const errorObject = getErrorsFromIssues(parseResult.error.issues);
       const error = new ValidationError(errorObject, 'Validation failed');
 
-      res.status(422).json({
-        message: error.message,
-        errorDetails: error.errorDetails,
-      });
+      // res.status(422).json({
+      //   message: error.message,
+      //   errorDetails: error.errorDetails,
+      // });
+
+      next(error);
       return;
     }
 

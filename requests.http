@@ -3,13 +3,13 @@ GET http://localhost:3000/health HTTP/1.1
 ###
 
 GET http://localhost:3000/redis HTTP/1.1
-
+ 
 ###
 
 POST http://localhost:3000/auth/send-code HTTP/1.1
 Content-Type: application/json
 
-{
+{ 
     "email":"segal.netanel4@gmail.com",
     "name":"Netanel Segal"
 }
@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
     "email":"segal.netanel4@gmail.com",
-    "code":"533269"
+    "code":"622780"
 }
 
 

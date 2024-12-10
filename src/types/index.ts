@@ -1,9 +1,9 @@
 import { Request } from 'express';
-import { Types } from 'mongoose';
 
 export interface Payload {
-  _id: Types.ObjectId;
+  _id: string;
 }
+
 export interface CustomRequest extends Request {
   user: Payload;
 }

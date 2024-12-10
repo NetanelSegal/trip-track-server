@@ -16,13 +16,14 @@ export const authenticateToken = (
   );
 
   const token = req.cookies.token;
-  if (!token) {
-    throw error;
-  }
+
+  if (!token) throw error;
 
   try {
-    const userId = verifyToken(token);
-    (req as CustomRequest).user = userId;
+    const payload = verifyToken(token);
+
+    (req as CustomRequest).user = payload;
+
     next();
   } catch (err) {
     error.message = 'Invalid token';

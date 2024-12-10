@@ -15,10 +15,10 @@ router.get('/health', async (req: Request, res: Response) => {
 });
 router.use('/auth', authRouter);
 
-router.use((err: AppError, req: Request, res: Response) => {
+router.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
   Logger.error(err);
 
-  res.status(500).json({ message: err.message, title: err.name });
+  res.status(500).json(err);
 });
 
 export { router as indexRouter };
