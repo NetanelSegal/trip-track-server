@@ -1,20 +1,18 @@
+import { Types } from 'mongoose';
 import { UserModel } from '../models/user.model';
-import { AppError } from '../utils/AppError';
 
-export const userGetOrCreate = async ({
+export const userGetOrCreateMongo = async ({
   email,
   name,
 }: {
   email: string;
   name: string;
-}) => {
-  try {
-    const user = await UserModel.findOne({ email });
-    if (user) {
-      return user;
-    }
-    return await UserModel.create({ email, name });
-  } catch (error) {
-    throw new AppError(error.name, error.message, 500, 'MongoDB');
+}): Promise<{ _id: Types.ObjectId; email: string; name: string }> => {
+  let user = await UserModel.findOne({ email });
+
+  if (!user) {
+    user = await UserModel.create({ email, name });
   }
+
+  return user;
 };
