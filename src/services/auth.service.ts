@@ -28,24 +28,28 @@ export const sendEmailWithCodeToUser = async (
   email: string,
   code: string
 ): Promise<ClientResponse> => {
-  const pathToFile = path.join(
-    __dirname,
-    '..',
-    '..',
-    'public',
-    'verify-code.html'
-  );
+  try {
+    const pathToFile = path.join(
+      __dirname,
+      '..',
+      '..',
+      'public',
+      'verify-code.html'
+    );
 
-  const html = (await readFile(pathToFile)).replace('**XXXXXX**', code);
+    const html = (await readFile(pathToFile)).replace('**XXXXXX**', code);
 
-  const sendEmailres = await sendEmail({
-    to: email,
-    subject: 'test',
-    text: `your verification code is ${code}`,
-    html: html,
-  });
+    const sendEmailres = await sendEmail({
+      to: email,
+      subject: 'test',
+      text: `your verification code is ${code}`,
+      html: html,
+    });
 
-  return sendEmailres[0];
+    return sendEmailres[0];
+  } catch (error) {
+    throw new AppError(error.name, error.message, 500, 'sendEmail');
+  }
 };
 
 export const saveUserDataInRedis = async (
@@ -53,9 +57,13 @@ export const saveUserDataInRedis = async (
   code: string,
   expirationTimeMinutes: number
 ) => {
-  await RedisCache.setKeyWithValue({
-    key: email,
-    value: JSON.stringify({ code }),
-    expirationTime: 60 * 60 * expirationTimeMinutes,
-  });
+  try {
+    await RedisCache.setKeyWithValue({
+      key: email,
+      value: JSON.stringify({ code }),
+      expirationTime: 60 * 60 * expirationTimeMinutes,
+    });
+  } catch (error) {
+    throw new AppError(error.name, error.message, 500, 'Redis');
+  }
 };
