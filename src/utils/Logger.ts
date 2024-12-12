@@ -25,7 +25,7 @@ export class Logger {
       }
     }
 
-    const formattedMessage = `\n${JSON.stringify(objToStringify, null, 2)}`;
+    const formattedMessage = `\n${JSON.stringify(objToStringify, null, 2).replace(/\\n/g, '\n')}`;
 
     return `${coloredPrefix}${formattedMessage}`;
   }
@@ -35,7 +35,7 @@ export class Logger {
   }
 
   static error(message: string | object): void {
-    console.error(this.formatMessage(message, '[ERROR]:', '31')); // Red
+    console.log(this.formatMessage(message, '[ERROR]:', '31')); // Red
   }
 
   static warn(message: string | object): void {

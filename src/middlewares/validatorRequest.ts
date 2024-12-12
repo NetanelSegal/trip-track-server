@@ -10,14 +10,8 @@ export function validateRequest<T>(schema: ZodSchema<T>) {
 
     if (!parseResult.success) {
       const errorObject = getErrorsFromIssues(parseResult.error.issues);
-      const error = new ValidationError(errorObject, 'Validation failed');
 
-      // res.status(422).json({
-      //   message: error.message,
-      //   errorDetails: error.errorDetails,
-      // });
-
-      next(error);
+      next(new ValidationError(errorObject, 'Validation failed'));
       return;
     }
 

@@ -5,19 +5,18 @@ import { CustomRequest } from '../types';
 
 export const authenticateToken = (
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) => {
-  const error = new AppError(
-    'AppError',
-    'Token is missing',
-    401,
-    'authenticateToken'
-  );
-
   const token = req.cookies.token;
 
-  if (!token) throw error;
+  if (!token)
+    throw new AppError(
+      'AppError',
+      'Token is missing',
+      401,
+      'authenticateToken'
+    );
 
   try {
     const payload = verifyToken(token);
@@ -25,8 +24,7 @@ export const authenticateToken = (
     (req as CustomRequest).user = payload;
 
     next();
-  } catch (err) {
-    error.message = 'Invalid token';
+  } catch (error) {
     next(error);
   }
 };

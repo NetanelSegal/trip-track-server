@@ -17,8 +17,9 @@ router.use('/auth', authRouter);
 
 router.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
   Logger.error(err);
-
-  res.status(500).json(err);
+  res.status(err.statusCode || 500).json({
+    error: `Error: ${err.message}, Source: ${err.source}, Status code: ${err.statusCode}`,
+  });
 });
 
 export { router as indexRouter };
