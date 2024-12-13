@@ -30,7 +30,6 @@ export const sendCode = async (
     const response = await sendEmailWithCodeToUser(email, code);
 
     res.status(response.statusCode || 202).json({
-      code,
       message: `code sent successfully and will expire in ${REDIS_EXP_TIME_MIN} minutes`,
     });
   } catch (error) {
