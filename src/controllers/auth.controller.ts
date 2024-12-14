@@ -1,10 +1,19 @@
 import { NextFunction, Request, Response } from 'express';
-import { sendEmail } from '../services/email.service';
-import path from 'path';
 import { generateRandomDigitsCode, readFile } from '../utils/functions.utils';
-import RedisCache from '../services/redis.service';
-import { AppError } from '../utils/AppError';
-import { userGetOrCreate } from '../services/user.service';
+import { userGetOrCreateMongo } from '../services/user.service';
+import { generateToken } from '../utils/jwt.utils';
+import { CustomRequest } from '../types';
+import {
+  SendCodeSchema,
+  VerifyCodeSchema,
+} from '../validationSchemas/authSchemas';
+import {
+  saveUserDataInRedis,
+  sendEmailWithCodeToUser,
+  validateCodeWithRedis,
+} from '../services/auth.service';
+
+const REDIS_EXP_TIME_MIN = 10;
 
 export const sendCode = async (
   req: Request,
@@ -12,33 +21,16 @@ export const sendCode = async (
   next: NextFunction
 ) => {
   try {
+    const { email } = req.body as SendCodeSchema;
+
     const code = generateRandomDigitsCode(6);
 
-    await RedisCache.setKeyWithValue({
-      key: req.body.email,
-      value: JSON.stringify({ code, name: req.body.name }),
-      expirationTime: 60 * 5,
-    });
+    await saveUserDataInRedis(email, code, REDIS_EXP_TIME_MIN);
 
-    const pathToFile = path.join(
-      __dirname,
-      '..',
-      '..',
-      'public',
-      'verify-code.html'
-    );
+    const response = await sendEmailWithCodeToUser(email, code);
 
-    const html = (await readFile(pathToFile)).replace('**XXXXXX**', code);
-
-    const sendEmailres = await sendEmail({
-      to: req.body.email,
-      subject: 'test',
-      text: `test`,
-      html: html,
-    });
-
-    res.status(sendEmailres[0].statusCode || 202).json({
-      message: 'code sent successfully',
+    res.status(response.statusCode || 202).json({
+      message: `code sent successfully and will expire in ${REDIS_EXP_TIME_MIN} minutes`,
     });
   } catch (error) {
     next(error);
@@ -51,27 +43,33 @@ export const verifyCode = async (
   next: NextFunction
 ) => {
   try {
-    const { email, code } = req.body;
+    const { email, name, code } = req.body as VerifyCodeSchema;
 
-    const redisResult = await RedisCache.getValueByKey<string>(email);
+    await validateCodeWithRedis(email, code);
 
-    if (!redisResult) {
-      throw new AppError('AppError', "code doesn't exist", 500, 'Redis');
-    }
-
-    const { code: redisCode, name } = JSON.parse(redisResult);
-
-    if (redisCode !== code) {
-      throw new AppError('AppError', 'wrong code', 401, 'Redis');
-    }
-
-    const user = await userGetOrCreate({
+    const user = await userGetOrCreateMongo({
       email,
       name,
     });
 
-    res.status(200).json(user);
+    const token = generateToken({
+      _id: user._id.toString(),
+    });
+
+    res
+      .cookie('token', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000,
+      })
+      .status(200)
+      .json({ user });
   } catch (error) {
     next(error);
   }
+};
+
+export const validateToken = async (req: Request, res: Response) => {
+  res.status(200).json((req as CustomRequest).user);
 };

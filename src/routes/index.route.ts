@@ -16,7 +16,6 @@ router.get('/health', async (req: Request, res: Response) => {
 });
 
 router.use('/auth', authRouter);
-
 router.use('/trip', tripRouter);
 
 router.use(

@@ -21,7 +21,7 @@ class RedisDAL {
   constructor() {
     this.redisClient = createClient({ url: REDIS_URL });
 
-    this.redisClient.connect().then(() => Logger.error('connect to Redis'));
+    this.redisClient.connect().then(() => Logger.success('connect to Redis'));
 
     this.redisClient.on('error', (err) =>
       Logger.error(new AppError(err.name, err.message, 500, 'Redis'))
