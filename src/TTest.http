@@ -1,0 +1,57 @@
+get  http://localhost:3000/health
+
+###
+POST http://localhost:3000/trip/create
+content-type: application/json
+
+{
+  "creator": "5f3f3f3f3f3f3f3f3f3f3f3f",
+  "guides": ["5f3f3f3f3f3f3f3f3f3f3f3f", "5f3f3f3f3f3f3f3f3f3f3f3f"],
+  "name": "My Trip",
+  "description": "A description",
+  "stops": [
+    {
+      "location": { "lon": 0, "lat": 0 },
+      "address": {
+        "street": "123 Main St",
+        "city": "Anytown",
+        "state": "CA",
+        "zip": "12345"
+      },
+      "mission": {
+        "type": "treasure_find",
+        "data": { "description": "What is 2 + 2?", "photo": "4" }
+      }
+    }
+  ]
+}
+
+###
+POST http://localhost:3000/trip/update/6758a131b4e01c6cdb13d712
+content-type: application/json
+
+{
+  "creator": "5f3f3f3f3f3f3f3f3f3f3f3f",
+  "guides": ["5f3f3f3f3f3f3f3f3f3f3f3f", "5f3f3f3f3f3f3f3f3f3f3f3f"],
+  "name": "My Trip",
+  "description": "A description",
+  "stops": [
+    {
+      "location": { "lon": 0, "lat": 0 },
+      "mission": {
+        "type": "treasure_find",
+        "data": { "description": "What is 2 + 2?", "photo": "4" }
+      }
+    }
+  ]
+}
+###
+DELETE http://localhost:3000/trip/delete/67588d036dfe1e1343305bf9 HTTP/1.1
+
+###
+GET http://localhost:3000/trip/getAll HTTP/1.1
+Content-Type: application/json
+
+{
+  "id":"5f3f3f3f3f3f3f3f3f3f3f3f"
+}
