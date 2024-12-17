@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { MissionType } from '../validations/trip.validations';
+import { MissionType } from '../validationSchemas/tripSchema';
 
 const StopSchema = new mongoose.Schema(
   {
@@ -24,8 +24,8 @@ const StopSchema = new mongoose.Schema(
 );
 
 const TripSchema = new mongoose.Schema({
-  creator: Schema.Types.ObjectId,
-  guides: [Schema.Types.ObjectId],
+  creator: String,
+  guides: [String],
   name: String,
   description: String,
   stops: [StopSchema],

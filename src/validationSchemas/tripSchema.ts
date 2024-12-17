@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ObjectId } from 'mongodb';
 
 export enum MissionType {
   TRIVIA = 'trivia',

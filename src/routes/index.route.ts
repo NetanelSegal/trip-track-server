@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { authRouter } from './auth.route';
 import { Logger } from '../utils/Logger';
-import { AppError } from '../utils/AppError';
+import { AppError ,ValidationError } from '../utils/AppError';
 import { tripRouter } from './trip.route';
 
 const router = Router();
@@ -19,9 +19,9 @@ router.use('/auth', authRouter);
 router.use('/trip', tripRouter);
 
 router.use(
-  (err: AppError, req: Request, res: Response, _next: NextFunction) => {
+  (err: AppError , req: Request, res: Response, _next: NextFunction) => {
     Logger.error(err);
-    res.status(500).json({ message: err.message, title: err.name });
+    res.status(500).json({ message: err.message, title: err.name});
   }
 );
 

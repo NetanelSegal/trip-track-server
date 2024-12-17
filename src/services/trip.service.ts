@@ -1,86 +1,64 @@
-import { RequestHandler } from "express";
-import { createTripSchema } from "../validations/trip.validations";
+import { TripT } from "../validationSchemas/tripSchema";
 import { Trip } from "../models/trip.model";
 import { AppError } from "../utils/AppError";
 
-export const createTrip: RequestHandler = async (req, res, next) => {
+export const mongoCreateTrip = async (data: TripT): Promise<TripT> => {
   try {
-    const response = createTripSchema.safeParse(req.body);
-    if (!response.success) {
-      res.status(400).json({ error: response.error.format() });
-      return; 
-    }
-    const trip = await Trip.create(response.data);
-    res.json(trip); 
-  } catch (error: any) {
-    next(new AppError(error.name, error.message, 500, "MongoDB"));
+    const trip = await Trip.create(data);
+    return trip;
+  } catch (error) {
+    throw new AppError(error.name, error.message, 500, "MongoDB");
   }
 };
 
-export const updateTrip: RequestHandler = async (req, res, next) => {
+export const mongoUpdateTrip = async ({
+  id,
+  data,
+}: {
+  id: string;
+  data: TripT;
+}): Promise<TripT> => {
   try {
-    const { id } = req.params;
-    const updates = req.body;
-    const response = createTripSchema.safeParse(updates);
-    if (!response.success) {
-      res.status(400).json({ error: response.error.format() });
-      return;
-    }
-    const updatedTrip = await Trip.findByIdAndUpdate(
-      id,
-      { $set: updates },
-      { new: true }
-    );
-
-    if (!updatedTrip) {
-      res.status(404).json({ error: "Trip not found" });
-      return;
-    }
-
-    res.json(updatedTrip);
+    const updatedTrip = await Trip.findByIdAndUpdate(id, data, { new: true });
+    return updatedTrip;
   } catch (error: any) {
-    next(new AppError(error.name, error.message, 500, "MongoDB"));
+    throw new AppError(error.name, error.message, 500, "MongoDB");
   }
 };
 
-
-
-export const getTrips: RequestHandler = async (req, res, next) => {
+export const mongoGetTripById = async (id: string): Promise<TripT> => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const trip = await Trip.findById(id);
+
+    return trip;
+  } catch (error: any) {
+    throw new AppError(error.name, error.message, 500, "MongoDB");
+  }
+};
+export const mongoGetTrips = async ({
+  id,
+  page = 1,
+  limit = 10,
+}: {
+  id: string;
+  page: number;
+  limit: number;
+}): Promise<TripT[]> => {
+  try {
     const skip = (Number(page) - 1) * Number(limit);
-    const trips = await Trip.find({creator: req.body.id})
+    const trips = await Trip.find({ creator: id })
       .skip(skip)
       .limit(Number(limit));
-    res.json(trips);
+    return trips;
   } catch (error: any) {
-    next(new AppError(error.name, error.message, 500, "MongoDB"));
+    throw new AppError(error.name, error.message, 500, "MongoDB");
   }
 };
 
-
-export const getTrip: RequestHandler = async (req, res, next) => {
+export const mongoDeleteTrip = async (id: string): Promise<void> => {
   try {
-    const trip = await Trip.findById(req.params.id);
-    if (!trip) {
-      res.status(404).json({ error: "Trip not found" });
-      return;
-    }
-    res.json(trip);
+    const trip = await Trip.findByIdAndDelete(id);
   } catch (error: any) {
-    next(new AppError(error.name, error.message, 500, "MongoDB"));
-  }
-};
-
-export const deleteTrip: RequestHandler = async (req, res, next) => {
-  try {
-    const trip = await Trip.findByIdAndDelete(req.params.id);
-    if (!trip) {
-      res.status(404).json({ error: "Trip not found" });
-      return;
-    }
-    res.json(trip);
-  } catch (error: any) {
-    next(new AppError(error.name, error.message, 500, "MongoDB"));
+    throw new AppError(error.name, error.message, 500, "MongoDB");
   }
 };
