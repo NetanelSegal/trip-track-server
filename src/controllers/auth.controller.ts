@@ -27,9 +27,10 @@ export const sendCode = async (
 
     await saveUserDataInRedis(email, code, REDIS_EXP_TIME_MIN);
 
-    const response = await sendEmailWithCodeToUser(email, code);
+    // const response = await sendEmailWithCodeToUser(email, code);
 
-    res.status(response.statusCode || 202).json({
+    res.status(202).json({
+      code,
       message: `code sent successfully and will expire in ${REDIS_EXP_TIME_MIN} minutes`,
     });
   } catch (error) {
@@ -54,6 +55,8 @@ export const verifyCode = async (
 
     const token = generateToken({
       _id: user._id.toString(),
+      email: user.email,
+      name: user.name,
     });
 
     res
