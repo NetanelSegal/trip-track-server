@@ -1,5 +1,5 @@
 import { EMAIL_PASS, EMAIL_USER } from '../env.config';
-import sgMail from '@sendgrid/mail';
+import sgMail, { ClientResponse } from '@sendgrid/mail';
 import { AppError } from '../utils/AppError';
 
 sgMail.setApiKey(EMAIL_PASS);
@@ -11,7 +11,9 @@ interface ISendMailOptions {
   html: string;
 }
 
-export const sendEmail = async (options: ISendMailOptions) => {
+export const sendEmail = async (
+  options: ISendMailOptions
+): Promise<[ClientResponse, {}]> => {
   try {
     const res = await sgMail.send({
       from: EMAIL_USER,

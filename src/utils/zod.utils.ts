@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 
-const buildNestedObject = (path, message) => {
+const buildNestedObject = (path: (string | number)[], message: string) => {
   if (path.length === 0) {
     return { _: message };
   }
@@ -11,7 +11,7 @@ const buildNestedObject = (path, message) => {
   return { [key]: buildNestedObject(rest, message) };
 };
 
-const mergeObjects = (target, source) => {
+const mergeObjects = (target: Object, source: Object) => {
   for (const key in source) {
     if (typeof target[key] === 'object' && typeof source[key] === 'object') {
       mergeObjects(target[key], source[key]);
