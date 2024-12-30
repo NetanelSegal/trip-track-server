@@ -29,7 +29,6 @@ export const mongoUpdateTrip = async ({
 export const mongoGetTripById = async (id: string): Promise<TripT> => {
   try {
     const trip = await Trip.findById(id);
-
     return trip;
   } catch (error: any) {
     throw new AppError(error.name, error.message, 500, "MongoDB");
@@ -45,7 +44,7 @@ export const mongoGetTrips = async ({
   limit: number;
 }): Promise<TripT[]> => {
   try {
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (page - 1) * limit;
     const trips = await Trip.find({ creator: id })
       .skip(skip)
       .limit(Number(limit));

@@ -1,5 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema , Types} from 'mongoose';
 import { MissionType } from '../validationSchemas/tripSchema';
+import { TripT } from '../validationSchemas/tripSchema';
 
 const StopSchema = new mongoose.Schema(
   {
@@ -24,11 +25,11 @@ const StopSchema = new mongoose.Schema(
 );
 
 const TripSchema = new mongoose.Schema({
-  creator: String,
-  guides: [String],
+  creator: Types.ObjectId,
+  guides: [Types.ObjectId],
   name: String,
   description: String,
   stops: [StopSchema],
 });
 
-export const Trip = mongoose.model('Trip', TripSchema);
+export const Trip = mongoose.model<TripT>('Trip', TripSchema);

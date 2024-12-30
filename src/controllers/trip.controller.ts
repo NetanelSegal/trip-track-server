@@ -27,7 +27,7 @@ export const deleteTrip = async (
   next: NextFunction
 ) => {
   try {
-    await mongoDeleteTrip((req as CustomRequest).user._id.toString());
+    await mongoDeleteTrip((req as CustomRequest).user._id);
     res.json({ message: "Trip deleted successfully" });
   } catch (error) {
     next(error);
@@ -55,9 +55,9 @@ export const getTrips = async (
   try {
     const { page, limit } = req.query;
     const trips = await mongoGetTrips({
-      id: (req as CustomRequest).user._id.toString(),
-      page: Number(page),
-      limit: Number(limit),
+      id: (req as CustomRequest).user._id,
+      page: +page,
+      limit: +limit,
     });
     res.json(trips);
   } catch (error) {

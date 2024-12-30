@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ObjectId } from 'mongodb';
+import { Types } from 'mongoose'
 
 export enum MissionType {
   TRIVIA = 'trivia',
@@ -40,8 +40,6 @@ const missionSchema = z.discriminatedUnion('type', [
 
 
 export const createTripSchema = z.object({
-    creator: z.string(),
-    guides: z.array(z.string()),
     name: z.string(),
     description: z.string(),
     stops: z.array(
@@ -65,4 +63,7 @@ type TriviaData = z.infer<typeof TriviaSchema>;
 type InfoData = z.infer<typeof InfoSchema>;
 type TreasureData = z.infer<typeof TreasureSchema>;
 type Mission = z.infer<typeof missionSchema>;
-export type TripT = z.infer<typeof createTripSchema>;
+export type TripT = z.infer<typeof createTripSchema> & {
+    creator: Types.ObjectId;
+    guides: Types.ObjectId[];
+};
