@@ -47,7 +47,7 @@ export const mongoGetTrips = async ({
     const skip = (page - 1) * limit;
     const trips = await Trip.find({ creator: id })
       .skip(skip)
-      .limit(Number(limit));
+      .limit(limit);
     return trips;
   } catch (error: any) {
     throw new AppError(error.name, error.message, 500, "MongoDB");
