@@ -14,8 +14,8 @@
     "strictNullChecks": false /* When type checking, take into account 'null' and 'undefined'. */,
     "useUnknownInCatchVariables": false /* Default catch clause variables as 'unknown' instead of 'any'. */,
     "resolveJsonModule": true /* Enable importing .json files. */,
-    "typeRoots": ["./src/@types", "./node_modules/@types"]
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src/**/*.ts", "src/index.d.ts"],
+  "include": ["src/**/*.ts", "src/index.d.ts",],
   "exclude": ["node_modules"]
 }
