@@ -30,7 +30,9 @@ export const sendCode = async (
 
     await saveUserDataInRedis(email, code, REDIS_EXP_TIME_MIN);
 
-    const response = await sendEmailWithCodeToUser(email, code);
+    if (ENV !== 'development') {
+      await sendEmailWithCodeToUser(email, code);
+    }
 
     res.status(202).json({
       message: `code sent successfully and will expire in ${REDIS_EXP_TIME_MIN} minutes`,
