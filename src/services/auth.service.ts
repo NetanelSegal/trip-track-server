@@ -61,7 +61,7 @@ export const saveUserDataInRedis = async (
     await RedisCache.setKeyWithValue({
       key: email,
       value: JSON.stringify({ code }),
-      expirationTime: 60 * 60 * expirationTimeMinutes,
+      expirationTime: 60 * expirationTimeMinutes,
     });
   } catch (error) {
     throw new AppError(error.name, error.message, 500, 'Redis');

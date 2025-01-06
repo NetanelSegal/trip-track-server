@@ -16,8 +16,6 @@ import { ENV } from '../env.config';
 
 const REDIS_EXP_TIME_MIN = 10;
 
-console.log(ENV);
-
 export const sendCode = async (
   req: Request,
   res: Response,
