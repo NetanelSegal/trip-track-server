@@ -44,3 +44,19 @@ export const getAddressSuggestions = async (
     next(error);
   }
 };
+
+export const getGeocodeForAddress = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { address } = req.query;
+    const { data } = await axios(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${GOOGLE_API_KEY}`
+    );
+    res.json(data);
+  } catch (error) {
+    next(error);
+  }
+};

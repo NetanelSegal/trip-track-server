@@ -30,7 +30,9 @@ router.use(
       o.errorDetails = err.errorDetails;
     }
 
-    res.status(500).json({ message: err.message, title: err.name, ...o });
+    res
+      .status(err.statusCode)
+      .json({ message: err.message, title: err.name, ...o });
   }
 );
 
