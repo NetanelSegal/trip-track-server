@@ -4,6 +4,7 @@ import { Logger } from '../utils/Logger';
 import { AppError, ValidationError } from '../utils/AppError';
 import { tripRouter } from './trip.route';
 import { ENV } from '../env.config';
+import { googleRouter } from './google.route';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.get('/health', async (req: Request, res: Response) => {
   res.send('OK');
 });
 
+router.use('/google', googleRouter);
 router.use('/auth', authRouter);
 router.use('/trip', tripRouter);
 
@@ -28,7 +30,9 @@ router.use(
       o.errorDetails = err.errorDetails;
     }
 
-    res.status(500).json({ message: err.message, title: err.name, ...o });
+    res
+      .status(err.statusCode)
+      .json({ message: err.message, title: err.name, ...o });
   }
 );
 
