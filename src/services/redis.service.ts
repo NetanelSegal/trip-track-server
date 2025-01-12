@@ -16,22 +16,51 @@ interface IRedisSetValueProps<T> {
 }
 
 class RedisDAL {
+  private static MAX_RECONNECT_ATTEMPTS = 3;
+  private reconnectAttempts = 0;
   private redisClient: RedisClientType;
   // connect to redis
   constructor() {
     this.redisClient = createClient({
       socket: {
-        reconnectStrategy: (attempts) =>
-          attempts > 10 ? null : Math.min(attempts * 1000, 5000),
+        reconnectStrategy: (attempts) => Math.min(attempts * 1000, 5000),
       },
       url: REDIS_URL,
     });
 
-    this.redisClient.connect().then(() => Logger.success('connect to Redis'));
+    this.connect().catch((error) => Logger.error(error));
 
-    this.redisClient.on('error', (err) =>
-      Logger.error(new AppError(err.name, err.message, 500, 'Redis'))
-    );
+    this.redisClient.on('error', async (err) => {
+      if (err.code === 'ECONNREFUSED') {
+        if (this.reconnectAttempts > RedisDAL.MAX_RECONNECT_ATTEMPTS) {
+          await this.redisClient.disconnect();
+          this.reconnectAttempts = 0;
+        } else {
+          err.message += ' - Attempts: ' + this.reconnectAttempts;
+          this.reconnectAttempts++;
+        }
+      }
+      Logger.error(err);
+    });
+  }
+
+  private async connect(): Promise<void> {
+    await this.redisClient.connect();
+    if (this.redisClient.isOpen) {
+      Logger.success('Connected to Redis');
+    } else {
+      throw new AppError(
+        'RedisConnectionError',
+        'Could not connect to Redis',
+        500,
+        'Redis'
+      );
+    }
+  }
+
+  private async ensureConnected(): Promise<void> {
+    if (this.redisClient.isOpen) return;
+    await this.connect();
   }
 
   async getSetValue<T>({
@@ -40,6 +69,7 @@ class RedisDAL {
     expirationTime,
   }: IRedisCacheProps<T>): Promise<T> {
     try {
+      await this.ensureConnected();
       const redisData = await this.redisClient.GET(key);
       if (redisData) return JSON.parse(redisData) as T;
 
@@ -47,16 +77,17 @@ class RedisDAL {
       this.redisClient.SETEX(key, expirationTime, JSON.stringify(newValue));
       return newValue;
     } catch (error) {
-      throw new Error(`error getting redis data: ${error.message}`);
+      throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
 
   async getValueByKey<T>(key: string): Promise<T | null> {
     try {
+      await this.ensureConnected();
       const redisData = await this.redisClient.GET(key);
       return redisData ? (JSON.parse(redisData) as T) : null;
     } catch (error) {
-      throw new Error(`error getting redis data: ${error.message}`);
+      throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
 
@@ -66,10 +97,11 @@ class RedisDAL {
     expirationTime,
   }: IRedisCacheProps<T>): Promise<void> {
     try {
+      await this.ensureConnected();
       const value = await callbackFn();
       await this.redisClient.SETEX(key, expirationTime, JSON.stringify(value));
     } catch (error) {
-      throw new Error(`error set key with new data: ${error.message}`);
+      throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
 
@@ -79,17 +111,19 @@ class RedisDAL {
     expirationTime,
   }: IRedisSetValueProps<T>): Promise<void> {
     try {
+      await this.ensureConnected();
       await this.redisClient.SETEX(key, expirationTime, JSON.stringify(value));
     } catch (error) {
-      throw new Error('error set key with new data');
+      throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
 
   async deleteKey(key: string): Promise<void> {
     try {
+      await this.ensureConnected();
       await this.redisClient.DEL(key);
     } catch (error) {
-      throw new Error('error delete key');
+      throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
 }
