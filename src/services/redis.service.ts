@@ -19,7 +19,13 @@ class RedisDAL {
   private redisClient: RedisClientType;
   // connect to redis
   constructor() {
-    this.redisClient = createClient({ url: REDIS_URL });
+    this.redisClient = createClient({
+      socket: {
+        reconnectStrategy: (attempts) =>
+          attempts > 10 ? null : Math.min(attempts * 1000, 5000),
+      },
+      url: REDIS_URL,
+    });
 
     this.redisClient.connect().then(() => Logger.success('connect to Redis'));
 
