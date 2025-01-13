@@ -47,19 +47,15 @@ export const verifyCode = async (
   next: NextFunction
 ) => {
   try {
-    const { email, name, code } = req.body as VerifyCodeSchema;
+    const { email, code } = req.body as VerifyCodeSchema;
 
     await validateCodeWithRedis(email, code);
 
-    const user = await userGetOrCreateMongo({
-      email,
-      name,
-    });
+    const { user, isNew } = await userGetOrCreateMongo(email);
 
     const token = generateToken({
       _id: user._id.toString(),
       email: user.email,
-      name: user.name,
     });
 
     res
@@ -70,7 +66,7 @@ export const verifyCode = async (
         maxAge: 15 * 60 * 1000,
       })
       .status(200)
-      .json({ user });
+      .json({ user, isNewUser: isNew });
   } catch (error) {
     next(error);
   }
