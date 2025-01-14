@@ -5,6 +5,7 @@ import { AppError, ValidationError } from '../utils/AppError';
 import { tripRouter } from './trip.route';
 import { ENV } from '../env.config';
 import { googleRouter } from './google.route';
+import { userRouter } from './user.route';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.get('/health', async (req: Request, res: Response) => {
 router.use('/google', googleRouter);
 router.use('/auth', authRouter);
 router.use('/trip', tripRouter);
+router.use('/user', userRouter);
 
 router.use(
   (err: AppError, req: Request, res: Response, _next: NextFunction) => {
@@ -31,7 +33,7 @@ router.use(
     }
 
     res
-      .status(err.statusCode)
+      .status(err.statusCode || 500)
       .json({ message: err.message, title: err.name, ...o });
   }
 );

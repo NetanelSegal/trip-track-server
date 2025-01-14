@@ -1,22 +1,21 @@
-import mongoose, { Schema , Types} from 'mongoose';
-import { MissionType } from '../validationSchemas/tripSchema';
+import mongoose, { Schema, Types } from 'mongoose';
+import { MissionType, StopT } from '../validationSchemas/tripSchema';
 import { TripT } from '../validationSchemas/tripSchema';
 
-const StopSchema = new mongoose.Schema(
+const StopSchema = new mongoose.Schema<StopT>(
   {
-    location: { lon: Number, lat: Number },
-    address: {
-      street: { type: String, required: false },
-      city: { type: String, required: false },
-      state: { type: String, required: false },
-      zip: { type: String, required: false },
+    location: {
+      lon: { type: Number, required: true },
+      lat: { type: Number, required: true },
     },
-    mission: {
+    address: String,
+    experience: {
       type: {
         type: String,
         enum: Object.values(MissionType),
       },
       data: Schema.Types.Mixed,
+      score: Number,
     },
   },
   {
@@ -24,7 +23,7 @@ const StopSchema = new mongoose.Schema(
   }
 );
 
-const TripSchema = new mongoose.Schema({
+const TripSchema = new mongoose.Schema<TripT>({
   creator: Types.ObjectId,
   guides: [Types.ObjectId],
   name: String,
