@@ -34,7 +34,6 @@ class S3Service {
       Body: fileContent,
       ContentType: fileType,
     };
-    console.log(params);
 
     return await this.s3.upload(params).promise();
   }
