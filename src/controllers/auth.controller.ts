@@ -12,6 +12,7 @@ import {
   sendEmailWithCodeToUser,
   validateCodeWithRedis,
 } from '../services/auth.service';
+import { ENV } from '../env.config';
 
 const REDIS_EXP_TIME_MIN = 10;
 
@@ -27,11 +28,13 @@ export const sendCode = async (
 
     await saveUserDataInRedis(email, code, REDIS_EXP_TIME_MIN);
 
-    // const response = await sendEmailWithCodeToUser(email, code);
+    if (ENV !== 'development') {
+      await sendEmailWithCodeToUser(email, code);
+    }
 
     res.status(202).json({
-      code,
       message: `code sent successfully and will expire in ${REDIS_EXP_TIME_MIN} minutes`,
+      ...(ENV === 'development' ? { code } : {}),
     });
   } catch (error) {
     next(error);
@@ -44,19 +47,15 @@ export const verifyCode = async (
   next: NextFunction
 ) => {
   try {
-    const { email, name, code } = req.body as VerifyCodeSchema;
+    const { email, code } = req.body as VerifyCodeSchema;
 
     await validateCodeWithRedis(email, code);
 
-    const user = await userGetOrCreateMongo({
-      email,
-      name,
-    });
+    const { user, isNew } = await userGetOrCreateMongo(email);
 
     const token = generateToken({
       _id: user._id.toString(),
       email: user.email,
-      name: user.name,
     });
 
     res
@@ -67,7 +66,7 @@ export const verifyCode = async (
         maxAge: 15 * 60 * 1000,
       })
       .status(200)
-      .json({ user });
+      .json({ user, isNewUser: isNew });
   } catch (error) {
     next(error);
   }
