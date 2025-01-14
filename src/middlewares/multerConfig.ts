@@ -23,10 +23,14 @@ const uploadMiddleware = multer({
   storage,
   fileFilter: (_, file, cb) => {
     if (!allowedFileTypes.includes(file.mimetype)) {
+      const allowedFileTypesFormatted = allowedFileTypes
+        .map((s) => s.split('/')[1])
+        .join(', ');
+
       return cb(
         new AppError(
           'AppError',
-          `Invalid file type, the allowed file types are: ${allowedFileTypes.map((s) => s.split('/')[1]).join(', ')}`,
+          `Invalid file type, the allowed file types are: ${allowedFileTypesFormatted}`,
           400,
           'Multer'
         )

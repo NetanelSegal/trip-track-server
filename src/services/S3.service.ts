@@ -38,12 +38,10 @@ class S3Service {
     return await this.s3.upload(params).promise();
   }
 
-  async deleteFile(fileName: string): Promise<void> {
-    const params = {
-      Bucket: this.bucketName,
-      Key: fileName,
-    };
-    await this.s3.deleteObject(params).promise();
+  async deleteFile(fileName: string): Promise<AWS.S3.DeleteObjectOutput> {
+    return await this.s3
+      .deleteObject({ Bucket: this.bucketName, Key: fileName })
+      .promise();
   }
 
   async renameFile(oldFileName: string, newFileName: string): Promise<void> {
