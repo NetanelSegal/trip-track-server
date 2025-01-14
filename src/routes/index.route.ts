@@ -6,6 +6,7 @@ import { tripRouter } from './trip.route';
 import { ENV } from '../env.config';
 import { googleRouter } from './google.route';
 import { userRouter } from './user.route';
+import { uploadRouter } from './upload.route';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/google', googleRouter);
 router.use('/auth', authRouter);
 router.use('/trip', tripRouter);
 router.use('/user', userRouter);
+router.use('/upload', uploadRouter);
 
 router.use(
   (err: AppError, req: Request, res: Response, _next: NextFunction) => {

@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 import {
   mongoCreateTrip,
   mongoDeleteTrip,
   mongoGetTripById,
   mongoGetTrips,
   mongoUpdateTrip,
-} from "../services/trip.service";
-import { CustomRequest } from "../types";
+} from '../services/trip.service';
+import { RequestJWTPayload } from '../types';
 
 export const createTrip = async (
   req: Request,
@@ -27,8 +27,8 @@ export const deleteTrip = async (
   next: NextFunction
 ) => {
   try {
-    await mongoDeleteTrip((req as CustomRequest).user._id);
-    res.json({ message: "Trip deleted successfully" });
+    await mongoDeleteTrip((req as RequestJWTPayload).user._id);
+    res.json({ message: 'Trip deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -55,7 +55,7 @@ export const getTrips = async (
   try {
     const { page, limit } = req.query;
     const trips = await mongoGetTrips({
-      id: (req as CustomRequest).user._id,
+      id: (req as RequestJWTPayload).user._id,
       page: +page,
       limit: +limit,
     });

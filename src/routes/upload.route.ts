@@ -1,30 +1,36 @@
-import { Router, Request, Response, NextFunction } from "express";
-import uploadMiddleware from "../middlewares/multerConfig";
-import { NODE_ENV } from "../env.config";
-import { s3Service } from "../services/S3Service.service";
+import { Router, Request, Response, NextFunction } from 'express';
+import uploadMiddleware from '../middlewares/multerConfig';
+import { ENV } from '../env.config';
+import { s3Service } from '../services/S3.service';
 import fs from 'fs';
 
 const router = Router();
 
-router.post('/upload', uploadMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+router.post(
+  '/',
+  uploadMiddleware.single('file'),
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // TODO - add to declare file 
-        const file = (req as any).file as { path: string; filename: string };
-        if (!file) {
-            // TODO - change to your error handling
-            throw new Error("sss")
-        }
-        if (NODE_ENV === 'production') {
-            // handle s3 upload
-            await s3Service.uploadFile(file.path, file.filename);
-            fs.unlinkSync(file.path); // remove file from the server
-        }
+      const file = req.file;
+      if (!file) throw new Error('sss');
 
-        res.status(200).json({ message: "File has been uploaded successfully" });
+      let s3Response = null;
+      if (ENV === 'production') {
+        s3Response = await s3Service.uploadFile(
+          file.path,
+          file.filename,
+          file.mimetype
+        );
+        fs.unlinkSync(file.path);
+      }
+      res.status(200).json({
+        message: 'File has been uploaded successfully',
+        ...(s3Response ? { url: s3Response.Location } : {}),
+      });
     } catch (error) {
-        /* TODO - add error handling */
-        next(error.message)
+      next(error);
     }
-});
+  }
+);
 
-export { router as authRouter };
+export { router as uploadRouter };

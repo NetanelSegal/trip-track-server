@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { generateRandomDigitsCode, readFile } from '../utils/functions.utils';
 import { userGetOrCreateMongo } from '../services/user.service';
 import { generateToken } from '../utils/jwt.utils';
-import { CustomRequest } from '../types';
+import { RequestJWTPayload } from '../types';
 import {
   SendCodeSchema,
   VerifyCodeSchema,
@@ -73,5 +73,5 @@ export const verifyCode = async (
 };
 
 export const validateToken = async (req: Request, res: Response) => {
-  res.status(200).json((req as CustomRequest).user);
+  res.status(200).json((req as RequestJWTPayload).user);
 };

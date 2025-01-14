@@ -1,37 +1,41 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { AppError } from '../utils/AppError';
 
-// Configure multer storage
+const allowedFileTypes = ['image/jpeg', 'image/png'];
+
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.resolve(__dirname, '../uploads');
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath);
-        }
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        cb(null, `${uniqueSuffix}-${file.originalname}`);
-    },
+  destination: (_, __, cb) => {
+    const uploadPath = path.resolve(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+    cb(null, uploadPath);
+  },
+  filename: (_, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  },
 });
 
-// TODO - play with index.d.ts in the src root
-// @ts-ignore
-const fileFilter = (req: any, file: Express.Multer.File, cb: (error: Error | null, acceptFile: boolean) => void) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-        cb(null, true);
-    } else {
-        cb(new Error('Unsupported file type'), false);
-    }
-};
-
-// Multer middleware
 const uploadMiddleware = multer({
-    storage,
-    fileFilter, // optional
-    limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
+  storage,
+  fileFilter: (_, file, cb) => {
+    if (!allowedFileTypes.includes(file.mimetype)) {
+      return cb(
+        new AppError(
+          'AppError',
+          `Invalid file type, the allowed file types are: ${allowedFileTypes.map((s) => s.split('/')[1]).join(', ')}`,
+          400,
+          'Multer'
+        )
+      );
+    }
+
+    cb(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 export default uploadMiddleware;

@@ -5,6 +5,6 @@ export interface Payload {
   email: string;
 }
 
-export interface CustomRequest extends Request {
+export interface RequestJWTPayload extends Request {
   user: Payload;
 }

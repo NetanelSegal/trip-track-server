@@ -36,7 +36,8 @@ class RedisDAL {
           await this.redisClient.disconnect();
           this.reconnectAttempts = 0;
         } else {
-          err.message += ' - Attempts: ' + this.reconnectAttempts;
+          err.message =
+            'Error connecting to Redis - Attempts: ' + this.reconnectAttempts;
           this.reconnectAttempts++;
         }
       }

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { getUserById, updateUser } from '../services/user.service';
-import { CustomRequest } from '../types';
+import { RequestJWTPayload } from '../types';
 
 export const getUserProfile = async (
   req: Request,
@@ -22,7 +22,7 @@ export const updateUserProfile = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as CustomRequest).user._id;
+    const userId = (req as RequestJWTPayload).user._id;
     const updateData = req.body;
 
     const updatedUser = await updateUser(userId, updateData);
