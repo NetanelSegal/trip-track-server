@@ -12,3 +12,5 @@ router.delete(
   validateRequest(deleteImageSchema, 'query'),
   deleteImage
 );
+
+export { router as uploadRouter };

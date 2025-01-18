@@ -14,14 +14,15 @@ export async function uploadImage(
     if (!file) throw new AppError('File not found', 'File not found', 400);
 
     let s3Response: AWS.S3.ManagedUpload.SendData = null;
-    // if (ENV === 'production') {
-    s3Response = await s3Service.uploadFile(
-      file.path,
-      file.filename,
-      file.mimetype
-    );
-    fs.unlinkSync(file.path);
-    // }
+
+    if (ENV === 'production') {
+      s3Response = await s3Service.uploadFile(
+        file.path,
+        file.filename,
+        file.mimetype
+      );
+      fs.unlinkSync(file.path);
+    }
 
     res.status(200).json({
       message: 'File has been uploaded successfully',

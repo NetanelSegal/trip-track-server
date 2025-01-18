@@ -14,7 +14,6 @@
   "description": "",
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
-    "@types/multer": "^1.4.12",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
     "cookie-parser": "^1.4.7",
@@ -38,7 +37,8 @@
     "prettier": "3.4.1",
     "ts-jest": "^29.2.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "@types/multer": "^1.4.12"
   },
   "peerDependencies": {
     "express": "^4.19.2"

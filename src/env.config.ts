@@ -1,10 +1,6 @@
 import { config } from 'dotenv';
-import path from 'path';
+
 config();
-// load environment variables based on the environment
-// const envFile =
-//   process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.dev';
-// config({ path: path.resolve(__dirname, envFile) });
 
 export const ENV = process.env.NODE_ENV ?? 'development';
 export const MONGO_URL = process.env.MONGO_URL ?? '';
