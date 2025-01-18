@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../utils/AppError';
 import { verifyToken } from '../utils/jwt.utils';
-import { CustomRequest } from '../types';
+import { RequestJWTPayload } from '../types';
 
 export const authenticateToken = (
   req: Request,
@@ -21,7 +21,7 @@ export const authenticateToken = (
   try {
     const payload = verifyToken(token);
 
-    (req as CustomRequest).user = payload;
+    (req as RequestJWTPayload).user = payload;
 
     next();
   } catch (error) {
