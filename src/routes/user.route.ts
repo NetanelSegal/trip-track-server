@@ -13,7 +13,7 @@ router.get('/:userId', getUserProfile);
 router.put(
   '/profile',
   authenticateToken,
-  validateRequest(Schemas.user.userSchema),
+  validateRequest(Schemas.user),
   updateUserProfile
 );
 

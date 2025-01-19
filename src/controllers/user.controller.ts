@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { getUserById, updateUser } from '../services/user.service';
 import { RequestJWTPayload } from '../types';
+import { Types } from 'trip-track-package';
 
 export const getUserProfile = async (
   req: Request,
@@ -23,9 +24,9 @@ export const updateUserProfile = async (
 ) => {
   try {
     const userId = (req as RequestJWTPayload).user._id;
-    const updateData = req.body;
+    const { email, ...restUpdateDate } = req.body as Types['User']['Model'];
 
-    const updatedUser = await updateUser(userId, updateData);
+    const updatedUser = await updateUser(userId, restUpdateDate);
     if (!updatedUser) {
       res
         .status(404)
