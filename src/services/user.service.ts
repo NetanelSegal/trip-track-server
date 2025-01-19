@@ -1,9 +1,10 @@
-import { IUser, UserModel } from '../models/user.model';
+import { Types } from 'trip-track-package';
+import { UserModel } from '../models/user.model';
 import { AppError } from '../utils/AppError';
 
 export async function userGetOrCreateMongo(
   email: string
-): Promise<{ user: IUser; isNew: boolean }> {
+): Promise<{ user: Types['User']['Model']; isNew: boolean }> {
   try {
     let user = await UserModel.findOne({ email });
 
@@ -18,7 +19,9 @@ export async function userGetOrCreateMongo(
   }
 }
 
-export async function getUserById(userId: string): Promise<IUser | null> {
+export async function getUserById(
+  userId: string
+): Promise<Types['User']['Model'] | null> {
   try {
     const user = await UserModel.findById(userId);
     if (!user) {
@@ -37,12 +40,13 @@ export async function getUserById(userId: string): Promise<IUser | null> {
 
 export async function updateUser(
   userId: string,
-  data: Partial<IUser>
-): Promise<IUser | null> {
+  data: Partial<Types['User']['Model']>
+): Promise<Types['User']['Model'] | null> {
   try {
     const user = await UserModel.findByIdAndUpdate(userId, data, {
       new: true,
     });
+
     if (!user) {
       throw new AppError('User not found', 'User not found', 404, 'MongoDB');
     }

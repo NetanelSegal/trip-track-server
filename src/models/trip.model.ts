@@ -1,8 +1,7 @@
 import mongoose, { Schema, Types } from 'mongoose';
-import { MissionType, StopT } from '../validationSchemas/tripSchema';
-import { TripT } from '../validationSchemas/tripSchema';
+import { ExperienceType, Types as TTTypes } from 'trip-track-package';
 
-const StopSchema = new mongoose.Schema<StopT>(
+const StopSchema = new mongoose.Schema<TTTypes['Trip']['Stop']['Model']>(
   {
     location: {
       lon: { type: Number, required: true },
@@ -12,7 +11,7 @@ const StopSchema = new mongoose.Schema<StopT>(
     experience: {
       type: {
         type: String,
-        enum: Object.values(MissionType),
+        enum: Object.values(ExperienceType),
       },
       data: Schema.Types.Mixed,
       score: Number,
@@ -23,7 +22,7 @@ const StopSchema = new mongoose.Schema<StopT>(
   }
 );
 
-const TripSchema = new mongoose.Schema<TripT>({
+const TripSchema = new mongoose.Schema<TTTypes['Trip']['Model']>({
   creator: Types.ObjectId,
   guides: [Types.ObjectId],
   name: String,
@@ -31,4 +30,7 @@ const TripSchema = new mongoose.Schema<TripT>({
   stops: [StopSchema],
 });
 
-export const Trip = mongoose.model<TripT>('Trip', TripSchema);
+export const Trip = mongoose.model<TTTypes['Trip']['Model']>(
+  'Trip',
+  TripSchema
+);

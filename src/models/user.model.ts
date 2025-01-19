@@ -1,14 +1,7 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose from 'mongoose';
+import { Types } from 'trip-track-package';
 
-export interface IUser extends Document {
-  email: string;
-  name?: string;
-  imageUrl?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-const userSchema = new mongoose.Schema<IUser>(
+const userSchema = new mongoose.Schema<Types['User']['Model']>(
   {
     email: {
       type: String,
@@ -21,4 +14,7 @@ const userSchema = new mongoose.Schema<IUser>(
   { timestamps: true }
 );
 
-export const UserModel = mongoose.model<IUser>('User', userSchema);
+export const UserModel = mongoose.model<Types['User']['Model']>(
+  'User',
+  userSchema
+);

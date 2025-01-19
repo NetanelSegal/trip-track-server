@@ -7,7 +7,7 @@ import {
   getTripById,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
-import { createTripSchema } from '../validationSchemas/tripSchema';
+import { Schemas } from 'trip-track-package';
 import { authenticateToken } from '../middlewares/authenticateToken';
 
 const router = Router();
@@ -15,16 +15,17 @@ const router = Router();
 router.post(
   '/create',
   authenticateToken,
-  validateRequest(createTripSchema),
+  validateRequest(Schemas.trip.createTripSchema),
   createTrip
 );
 
-router.post(
+router.put(
   '/update/:id',
   authenticateToken,
-  validateRequest(createTripSchema),
+  validateRequest(Schemas.trip.createTripSchema),
   updateTrip
 );
+
 router.get('/get/:id', authenticateToken, getTripById);
 router.get('/getAll', authenticateToken, getTrips);
 router.delete('/delete/:id', authenticateToken, deleteTrip);
