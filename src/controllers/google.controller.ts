@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { NextFunction, Request, Response } from 'express';
 import { GOOGLE_API_KEY } from '../env.config';
+import { AppError } from '../utils/AppError';
 
 interface PlacePrediction {
   description: string;
@@ -39,6 +40,11 @@ export const getAddressSuggestions = async (
     const googleRespone = (await axios(
       `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&key=${GOOGLE_API_KEY}`
     )) as GoogleAxiosResponse;
+
+    if (googleRespone.data.status === 'REQUEST_DENIED') {
+      throw new AppError('AppError', 'REQUEST_DENIED', 500, 'Google');
+    }
+
     res.json(googleRespone.data);
   } catch (error) {
     next(error);
