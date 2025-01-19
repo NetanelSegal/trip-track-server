@@ -1,29 +1,58 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../utils/AppError';
-import { verifyToken } from '../utils/jwt.utils';
+import { generateAccessToken, verifyToken } from '../utils/jwt.utils';
 import { RequestJWTPayload } from '../types';
+import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from '../env.config';
+import { Logger } from '../utils/Logger';
 
-export const authenticateToken = (
+export const authenticateToken = async (
   req: Request,
-  _: Response,
+  res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies.token;
+  try {
+    const { accessToken, refreshToken } = req.cookies;
 
-  if (!token)
+    if (accessToken) {
+      const user = verifyToken(accessToken, ACCESS_TOKEN_SECRET);
+      Logger.info(`Access token is valid for email user ${user.email}`);
+
+      if (user) {
+        (req as RequestJWTPayload).user = user;
+        return next();
+      }
+    }
+
+    if (refreshToken) {
+      const refreshUser = verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
+
+      if (refreshUser) {
+        Logger.info(
+          `Refresh token is valid for email user ${refreshUser.email} generating new access token`
+        );
+        const newAccessToken = generateAccessToken({
+          _id: refreshUser._id,
+          email: refreshUser.email,
+        });
+
+        res.cookie('accessToken', newAccessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 15 * 60 * 1000,
+        });
+
+        (req as RequestJWTPayload).user = refreshUser;
+        return next();
+      }
+    }
+
     throw new AppError(
       'AppError',
-      'Token is missing',
+      'Invalid or expired tokens',
       401,
       'authenticateToken'
     );
-
-  try {
-    const payload = verifyToken(token);
-
-    (req as RequestJWTPayload).user = payload;
-
-    next();
   } catch (error) {
     next(error);
   }

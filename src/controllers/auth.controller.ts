@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import { generateRandomDigitsCode, readFile } from '../utils/functions.utils';
+import { generateRandomDigitsCode } from '../utils/functions.utils';
 import { userGetOrCreateMongo } from '../services/user.service';
-import { generateToken } from '../utils/jwt.utils';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
 import { RequestJWTPayload } from '../types';
 import {
   SendCodeSchema,
@@ -53,17 +53,29 @@ export const verifyCode = async (
 
     const { user, isNew } = await userGetOrCreateMongo(email);
 
-    const token = generateToken({
+    // Generate tokens
+    const accessToken = generateAccessToken({
       _id: user._id.toString(),
-      email: user.email,
+      email,
+    });
+
+    const refreshToken = generateRefreshToken({
+      _id: user._id.toString(),
+      email,
     });
 
     res
-      .cookie('token', token, {
+      .cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: ENV === 'production',
         sameSite: 'strict',
         maxAge: 15 * 60 * 1000,
+      })
+      .cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .status(200)
       .json({ user, isNewUser: isNew });
