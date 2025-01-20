@@ -14,7 +14,10 @@ export const createTrip = async (
   next: NextFunction
 ) => {
   try {
-    const trip = await mongoCreateTrip(req.body);
+    const trip = await mongoCreateTrip({
+      ...req.body,
+      creator: (req as RequestJWTPayload).user._id,
+    });
     res.json(trip);
   } catch (error) {
     next(error);

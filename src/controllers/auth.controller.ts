@@ -4,15 +4,12 @@ import { userGetOrCreateMongo } from '../services/user.service';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
 import { RequestJWTPayload } from '../types';
 import {
-  SendCodeSchema,
-  VerifyCodeSchema,
-} from '../validationSchemas/authSchemas';
-import {
   saveUserDataInRedis,
   sendEmailWithCodeToUser,
   validateCodeWithRedis,
 } from '../services/auth.service';
 import { ENV } from '../env.config';
+import { Types } from 'trip-track-package';
 
 const REDIS_EXP_TIME_MIN = 10;
 
@@ -22,7 +19,7 @@ export const sendCode = async (
   next: NextFunction
 ) => {
   try {
-    const { email } = req.body as SendCodeSchema;
+    const { email } = req.body as Types['Auth']['SendCode'];
 
     const code = generateRandomDigitsCode(6);
 
@@ -47,7 +44,7 @@ export const verifyCode = async (
   next: NextFunction
 ) => {
   try {
-    const { email, code } = req.body as VerifyCodeSchema;
+    const { email, code } = req.body as Types['Auth']['VerifyCode'];
 
     await validateCodeWithRedis(email, code);
 

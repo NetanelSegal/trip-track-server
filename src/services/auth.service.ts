@@ -56,7 +56,7 @@ export const saveUserDataInRedis = async (
   email: string,
   code: string,
   expirationTimeMinutes: number
-) => {
+): Promise<void> => {
   try {
     await RedisCache.setKeyWithValue({
       key: email,
