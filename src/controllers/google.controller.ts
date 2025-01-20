@@ -27,7 +27,11 @@ interface PlacePrediction {
 }
 
 interface GoogleAxiosResponse {
-  data: { predictions: PlacePrediction[]; status: string };
+  data: {
+    predictions: PlacePrediction[];
+    status: string;
+    error_message?: string;
+  };
 }
 
 export const getAddressSuggestions = async (
@@ -42,7 +46,12 @@ export const getAddressSuggestions = async (
     )) as GoogleAxiosResponse;
 
     if (googleRespone.data.status === 'REQUEST_DENIED') {
-      throw new AppError('AppError', 'REQUEST_DENIED', 500, 'Google');
+      throw new AppError(
+        'AppError',
+        googleRespone.data.error_message,
+        500,
+        'Google'
+      );
     }
 
     res.json(googleRespone.data);
