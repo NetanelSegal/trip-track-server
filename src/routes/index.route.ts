@@ -33,9 +33,11 @@ router.use((err: AppError, _: Request, res: Response, _next: NextFunction) => {
     o.errorDetails = err.errorDetails;
   }
 
-  res
-    .status(err.statusCode || 500)
-    .json({ message: err.message, title: err.name, ...o });
+  res.status(err.statusCode || 500).json({
+    message: ENV === 'development' ? err.message : 'Internal server error',
+    title: err.name,
+    ...o,
+  });
 });
 
 export { router as indexRouter };
