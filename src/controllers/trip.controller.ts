@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
 import {
   mongoCreateTrip,
@@ -7,6 +8,9 @@ import {
   mongoUpdateTrip,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
+import { s3Service } from '../services/S3.service';
+import { AppError } from '../utils/AppError';
+import { Types } from 'trip-track-package';
 
 export const createTrip = async (
   req: Request,
@@ -14,10 +18,28 @@ export const createTrip = async (
   next: NextFunction
 ) => {
   try {
-    const trip = await mongoCreateTrip({
-      ...req.body,
+    const file = req.file;
+    const { creator, ...data } = req.body;
+    const tripData = {
       creator: (req as RequestJWTPayload).user._id,
-    });
+      ...data,
+    };
+
+    if (file) {
+      const s3Response = await s3Service.uploadFile(
+        file.path,
+        file.filename,
+        file.mimetype
+      );
+      fs.unlinkSync(file.path);
+      tripData.reward = {
+        ...tripData.reward,
+        image: s3Response.Location,
+      };
+    }
+
+    const trip = await mongoCreateTrip(tripData);
+
     res.json(trip);
   } catch (error) {
     next(error);
