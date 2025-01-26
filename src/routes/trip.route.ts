@@ -9,12 +9,16 @@ import {
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
 import { authenticateToken } from '../middlewares/authenticateToken';
+import uploadMiddleware from '../middlewares/multerConfig';
+import { parseFormData } from '../middlewares/parseFormData';
 
 const router = Router();
 
 router.post(
   '/create',
   authenticateToken,
+  uploadMiddleware.single('rewardImage'),
+  parseFormData,
   validateRequest(Schemas.trip.createTripSchema),
   createTrip
 );

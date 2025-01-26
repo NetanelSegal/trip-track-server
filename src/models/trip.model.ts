@@ -1,7 +1,7 @@
 import mongoose, { Schema, Types } from 'mongoose';
 import { ExperienceType, Types as TTTypes } from 'trip-track-package';
 
-const StopSchema = new mongoose.Schema<TTTypes['Trip']['Stop']['Model']>(
+const StopSchema = new Schema<TTTypes['Trip']['Stop']['Model']>(
   {
     location: {
       lon: { type: Number, required: true },
@@ -22,12 +22,23 @@ const StopSchema = new mongoose.Schema<TTTypes['Trip']['Stop']['Model']>(
   }
 );
 
-const TripSchema = new mongoose.Schema<TTTypes['Trip']['Model']>({
+const RewardSchema = new Schema<TTTypes['Trip']['Reward']['Model']>(
+  {
+    image: String,
+    title: { type: String, required: true },
+  },
+  {
+    _id: false,
+  }
+);
+
+const TripSchema = new Schema<TTTypes['Trip']['Model']>({
   creator: Types.ObjectId,
   guides: [Types.ObjectId],
   name: String,
   description: String,
   stops: [StopSchema],
+  reward: RewardSchema,
 });
 
 export const Trip = mongoose.model<TTTypes['Trip']['Model']>(
