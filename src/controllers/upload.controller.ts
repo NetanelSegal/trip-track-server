@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { s3Service } from '../services/S3.service';
 import { ENV } from '../env.config';
 import { AppError } from '../utils/AppError';
-
+import { CompleteMultipartUploadCommandOutput } from '@aws-sdk/client-s3';
 export async function uploadImage(
   req: Request,
   res: Response,
@@ -13,7 +13,7 @@ export async function uploadImage(
     const file = req.file;
     if (!file) throw new AppError('File not found', 'File not found', 400);
 
-    let s3Response: AWS.S3.ManagedUpload.SendData = null;
+    let s3Response: CompleteMultipartUploadCommandOutput = null;
 
     if (ENV === 'production') {
       s3Response = await s3Service.uploadFile(

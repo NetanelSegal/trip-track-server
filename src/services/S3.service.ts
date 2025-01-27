@@ -1,4 +1,10 @@
-import AWS from 'aws-sdk';
+import { Upload } from '@aws-sdk/lib-storage';
+import {
+  CompleteMultipartUploadCommandOutput,
+  DeleteObjectCommandOutput,
+  PutObjectCommandInput,
+  S3,
+} from '@aws-sdk/client-s3';
 import fs from 'fs';
 import {
   AWS_ACCESS_KEY,
@@ -8,12 +14,13 @@ import {
 } from '../env.config';
 
 class S3Service {
-  private s3: AWS.S3;
+  private s3: S3;
   private readonly bucketName: string;
 
   constructor() {
-    this.s3 = new AWS.S3({
+    this.s3 = new S3({
       region: AWS_REGION,
+
       credentials: {
         accessKeyId: AWS_ACCESS_KEY,
         secretAccessKey: AWS_SECRET_KEY,
@@ -26,22 +33,26 @@ class S3Service {
     filePath: string,
     fileName: string,
     fileType: string
-  ): Promise<AWS.S3.ManagedUpload.SendData> {
+  ): Promise<CompleteMultipartUploadCommandOutput> {
     const fileContent = fs.readFileSync(filePath);
-    const params: AWS.S3.PutObjectRequest = {
+    const params: PutObjectCommandInput = {
       Bucket: this.bucketName,
       Key: fileName,
       Body: fileContent,
       ContentType: fileType,
     };
 
-    return await this.s3.upload(params).promise();
+    return await new Upload({
+      client: this.s3,
+      params,
+    }).done();
   }
 
-  async deleteFile(fileName: string): Promise<AWS.S3.DeleteObjectOutput> {
-    return await this.s3
-      .deleteObject({ Bucket: this.bucketName, Key: fileName })
-      .promise();
+  async deleteFile(fileName: string): Promise<DeleteObjectCommandOutput> {
+    return await this.s3.deleteObject({
+      Bucket: this.bucketName,
+      Key: fileName,
+    });
   }
 
   async renameFile(oldFileName: string, newFileName: string): Promise<void> {
@@ -50,13 +61,13 @@ class S3Service {
       CopySource: `${this.bucketName}/${oldFileName}`,
       Key: newFileName,
     };
-    await this.s3.copyObject(copyParams).promise();
+    await this.s3.copyObject(copyParams);
 
     const deleteParams = {
       Bucket: this.bucketName,
       Key: oldFileName,
     };
-    await this.s3.deleteObject(deleteParams).promise();
+    await this.s3.deleteObject(deleteParams);
   }
 }
 
