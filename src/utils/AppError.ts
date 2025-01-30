@@ -24,7 +24,7 @@ export class ValidationError extends AppError {
     errorDetails: Record<string, any> = {},
     message: string = 'Validation failed'
   ) {
-    super('ValidationError', message, 422, 'Validation');
+    super('InputValidationError', message, 422, 'Validation');
     this.errorDetails = errorDetails;
   }
 }
