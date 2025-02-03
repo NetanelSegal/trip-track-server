@@ -26,7 +26,8 @@ export const mongoUpdateTrip = async ({
       throw new AppError("Trip not found", "Trip not found", 404, "MongoDB");
     }
     return updatedTrip;
-  } catch (error: any) {
+  } catch (error) {
+    if(error instanceof AppError) throw error;
     throw new AppError(
       error.name,
       error.message,
@@ -46,6 +47,7 @@ export const mongoGetTripById = async (
     }
     return trip;
   } catch (error: any) {
+    if(error instanceof AppError) throw error;
     throw new AppError(
       error.name,
       error.message,
@@ -71,6 +73,7 @@ export const mongoGetTrips = async ({
     }
     return trips;
   } catch (error: any) {
+    if(error instanceof AppError) throw error;
     throw new AppError(
       error.name,
       error.message,
@@ -87,6 +90,7 @@ export const mongoDeleteTrip = async (id: string): Promise<void> => {
       throw new AppError("Trip not found", "Trip not found", 404, "MongoDB");
     }
   } catch (error: any) {
+    if(error instanceof AppError) throw error;
     throw new AppError(
       error.name,
       error.message,
