@@ -15,9 +15,14 @@ export const authenticateToken = async (
 
     if (accessToken) {
       const user = verifyToken(accessToken, ACCESS_TOKEN_SECRET);
-      Logger.info(`Access token is valid for email user ${user.email}`);
-
+      console.log(user);
+      
       if (user) {
+        if ('email' in user){
+        Logger.info(`Access token is valid for email user ${user.email}`);
+        }else{
+          Logger.info(`Access token is valid for guest user ${user._id}`);
+        }
         (req as RequestJWTPayload).user = user;
         return next();
       }
@@ -27,13 +32,24 @@ export const authenticateToken = async (
       const refreshUser = verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
 
       if (refreshUser) {
-        Logger.info(
-          `Refresh token is valid for email user ${refreshUser.email} generating new access token`
-        );
-        const newAccessToken = generateAccessToken({
-          _id: refreshUser._id,
-          email: refreshUser.email,
-        });
+        let newAccessToken = '';
+        if ('email' in refreshUser){
+          Logger.info(
+            `Refresh token is valid for email user ${refreshUser.email} generating new access token`
+          );
+          newAccessToken = generateAccessToken({
+            _id: refreshUser._id,
+            email: refreshUser.email,
+          });
+        }else{
+          Logger.info(
+            `Refresh token is valid for guest user ${refreshUser._id} generating new access token`
+          );
+          newAccessToken = generateAccessToken({
+            _id: refreshUser._id,
+            role: refreshUser.role,
+          });
+        }
 
         res.cookie('accessToken', newAccessToken, {
           httpOnly: true,

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { generateRandomDigitsCode } from '../utils/functions.utils';
+import { generateRandomDigitsCode ,generateUUID } from '../utils/functions.utils';
 import { userGetOrCreateMongo } from '../services/user.service';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
 import { RequestJWTPayload } from '../types';
@@ -79,6 +79,24 @@ export const verifyCode = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const guestToken = async (req: Request, res: Response) => {
+  const uuid = generateUUID();
+  const accessToken = generateAccessToken({ _id: uuid , role: 'guest'});
+  const refreshToken = generateRefreshToken({ _id: uuid , role: 'guest'});
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 15 * 60 * 1000,
+  }).cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,  
+  }).status(200).json({ accessToken ,refreshToken , uuid });
 };
 
 export const validateToken = async (req: Request, res: Response) => {
