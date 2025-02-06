@@ -29,6 +29,7 @@ export async function getUserById(
     }
     return user;
   } catch (error) {
+    if (error instanceof AppError) throw error;
     throw new AppError(
       error.name,
       error.message,
@@ -52,6 +53,7 @@ export async function updateUser(
     }
     return user;
   } catch (error) {
+    if (error instanceof AppError) throw error;
     throw new AppError(
       error.name,
       error.message,
