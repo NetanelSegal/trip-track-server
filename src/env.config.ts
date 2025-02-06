@@ -9,6 +9,7 @@ export const EMAIL_USER = process.env.EMAIL_USER ?? '';
 export const EMAIL_PASS = process.env.EMAIL_PASS ?? '';
 export const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET ?? '';
 export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET ?? '';
+export const GUEST_TOKEN_SECRET = process.env.GUEST_TOKEN_SECRET ?? '';
 export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY ?? '';
 export const AWS_REGION = process.env.AWS_REGION ?? '';
 export const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME ?? '';
