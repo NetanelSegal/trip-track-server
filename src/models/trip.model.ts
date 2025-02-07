@@ -1,5 +1,9 @@
 import mongoose, { Schema, Types } from 'mongoose';
-import { ExperienceType, Types as TTTypes , statusArray } from 'trip-track-package';
+import {
+  ExperienceType,
+  Types as TTTypes,
+  TripStatusArray,
+} from 'trip-track-package';
 
 const StopSchema = new Schema<TTTypes['Trip']['Stop']['Model']>(
   {
@@ -39,7 +43,7 @@ const TripSchema = new Schema<TTTypes['Trip']['Model']>({
   description: String,
   stops: [StopSchema],
   reward: RewardSchema,
-  status: { type: String, enum: statusArray, default: 'created' },
+  status: { type: String, enum: TripStatusArray, default: 'created' },
 });
 
 export const Trip = mongoose.model<TTTypes['Trip']['Model']>(

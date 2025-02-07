@@ -9,8 +9,6 @@ import {
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
-import { AppError } from '../utils/AppError';
-import { Types } from 'trip-track-package';
 
 export const createTrip = async (
   req: Request,
@@ -52,7 +50,7 @@ export const deleteTrip = async (
   next: NextFunction
 ) => {
   try {
-    await mongoDeleteTrip((req as RequestJWTPayload).user._id);
+    await mongoDeleteTrip((req as RequestJWTPayload).user._id, req.params.id);
     res.json({ message: 'Trip deleted successfully' });
   } catch (error) {
     next(error);
@@ -79,11 +77,11 @@ export const getTrips = async (
 ) => {
   try {
     const { page, limit } = req.query;
-    const trips = await mongoGetTrips({
-      id: (req as RequestJWTPayload).user._id,
-      page: +page,
-      limit: +limit,
-    });
+    const trips = await mongoGetTrips(
+      (req as RequestJWTPayload).user._id,
+      +page,
+      +limit
+    );
     res.json(trips);
   } catch (error) {
     next(error);
@@ -96,10 +94,11 @@ export const updateTrip = async (
   next: NextFunction
 ) => {
   try {
-    const trip = await mongoUpdateTrip({
-      id: req.params.id,
-      data: req.body,
-    });
+    const trip = await mongoUpdateTrip(
+      (req as RequestJWTPayload).user._id,
+      req.params.id,
+      req.body
+    );
     res.json(trip);
   } catch (error) {
     next(error);
