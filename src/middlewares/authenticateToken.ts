@@ -17,11 +17,21 @@ export const authenticateToken = async (
   try {
     const { accessToken, refreshToken, guestToken } = req.cookies;
 
-    if (accessToken) {
+    if (guestToken) {
+      const guest = verifyToken(guestToken, GUEST_TOKEN_SECRET);
+
+      if (guest) {
+        Logger.info(`Access token is valid for guest ${guest._id}`);
+        (req as RequestJWTPayload).user = guest;
+        return next();
+      }
+    }
+
+    else if (accessToken) {
       const user = verifyToken(accessToken, ACCESS_TOKEN_SECRET);
 
-      if (user && "email" in user) {
-        Logger.info(`Access token is valid for email user ${user.email}`);
+      if (user) {
+        Logger.info(`Access token is valid for user ${user._id}`);
         (req as RequestJWTPayload).user = user;
         return next();
       }
@@ -30,7 +40,7 @@ export const authenticateToken = async (
     if (refreshToken) {
       const refreshUser = verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
 
-      if (refreshUser && "email" in refreshUser) {
+      if (refreshUser && refreshUser.role === "user") {
         Logger.info(
           `Refresh token is valid for email user ${refreshUser.email} generating new access token`
         );
@@ -48,16 +58,6 @@ export const authenticateToken = async (
         });
 
         (req as RequestJWTPayload).user = refreshUser;
-        return next();
-      }
-    }
-
-    if (guestToken) {
-      const guest = verifyToken(guestToken, GUEST_TOKEN_SECRET);
-
-      if (guest) {
-        Logger.info(`Access token is valid for guest ${guest._id}`);
-        (req as RequestJWTPayload).user = guest;
         return next();
       }
     }
