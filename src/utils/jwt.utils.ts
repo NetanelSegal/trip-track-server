@@ -1,5 +1,9 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from '../env.config';
+import {
+  ACCESS_TOKEN_SECRET,
+  REFRESH_TOKEN_SECRET,
+  GUEST_TOKEN_SECRET,
+} from '../env.config';
 import { Payload } from '../types';
 
 /**
@@ -18,6 +22,10 @@ export const generateAccessToken = (payload: Payload) => {
  */
 export const generateRefreshToken = (payload: Payload) => {
   return jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+};
+
+export const generateGuestToken = (payload: Payload) => {
+  return jwt.sign(payload, GUEST_TOKEN_SECRET, { expiresIn: '7d' });
 };
 
 /**

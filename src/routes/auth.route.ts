@@ -3,6 +3,7 @@ import {
   sendCode,
   verifyCode,
   validateToken,
+  createGuestToken,
 } from '../controllers/auth.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { authenticateToken } from '../middlewares/authenticateToken';
@@ -20,6 +21,7 @@ router.post(
   validateRequest(Schemas.auth.verifyCodeSchema),
   verifyCode
 );
+router.get('/create-guest-token', createGuestToken);
 router.get('/validate-token', authenticateToken, validateToken);
 
 export { router as authRouter };
