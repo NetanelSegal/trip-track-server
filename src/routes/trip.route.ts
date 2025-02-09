@@ -14,6 +14,14 @@ import { parseFormData } from '../middlewares/parseFormData';
 
 const router = Router();
 
+router.get('/getAll', authenticateToken, getTrips);
+router.get(
+  '/:id',
+  validateRequest(Schemas.mongoObjectId, 'params'),
+  authenticateToken,
+  getTripById
+);
+
 router.post(
   '/create',
   authenticateToken,
@@ -24,14 +32,18 @@ router.post(
 );
 
 router.put(
-  '/update/:id',
+  '/:id',
   authenticateToken,
+  validateRequest(Schemas.mongoObjectId, 'params'),
   validateRequest(Schemas.trip.createTripSchema),
   updateTrip
 );
 
-router.get('/get/:id', authenticateToken, getTripById);
-router.get('/getAll', authenticateToken, getTrips);
-router.delete('/delete/:id', authenticateToken, deleteTrip);
+router.delete(
+  '/:id',
+  validateRequest(Schemas.mongoObjectId, 'params'),
+  authenticateToken,
+  deleteTrip
+);
 
 export { router as tripRouter };
