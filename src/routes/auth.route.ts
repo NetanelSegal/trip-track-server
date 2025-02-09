@@ -21,7 +21,7 @@ router.post(
   validateRequest(Schemas.auth.verifyCodeSchema),
   verifyCode
 );
-router.post("/create-guest-token", createGuestToken);
+router.get("/create-guest-token", createGuestToken);
 router.get("/validate-token", authenticateToken, validateToken);
 
 export { router as authRouter };
