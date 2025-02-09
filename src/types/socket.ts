@@ -1,4 +1,4 @@
-import { Server, Socket } from 'socket.io';
+import { Server, Socket } from "socket.io";
 
 interface ServerToClientEvents {
   tripJoined: (userSocketId: string) => void;
@@ -6,6 +6,9 @@ interface ServerToClientEvents {
     userId: string,
     location: { lat: number; lon: number }
   ) => void;
+  isOutOfRange: (userSocketId: string) => void;
+  experienceFinished: (userSocketId: string) => void;
+  messageSent: (message: string) => void;
   tripStatusChanged: (tripId: string, status: string) => void;
   error: (
     data: { errorDetails: Record<string, any>; message: string } | string
@@ -18,7 +21,9 @@ interface ClientToServerEvents {
     tripId: string,
     { lon, lat }: { lon: number; lat: number }
   ) => void;
-  'connect-error': (error: Error) => void;
+  finishExperience: (tripId: string) => void;
+  sendMessage: (tripId: string, message: string) => void;
+  "connect-error": (error: Error) => void;
 }
 
 interface InterServerEvents {

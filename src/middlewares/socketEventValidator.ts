@@ -4,6 +4,9 @@ import { AppError } from '../utils/AppError';
 const validClientEvents: (keyof ClientToServerEvents)[] = [
   'joinTrip',
   'updateLocation',
+  'finishExperience',
+  'sendMessage',
+  'connect-error',
 ];
 
 export const socketEventValidator = (socket: SocketType) => {

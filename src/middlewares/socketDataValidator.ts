@@ -1,7 +1,7 @@
-import { ClientToServerEvents, SocketType } from '../types/socket';
-import { ZodSchema } from 'zod';
-import { AppError, ValidationError } from '../utils/AppError';
-import { getErrorsFromIssues } from '../utils/zod.utils';
+import { ClientToServerEvents, SocketType } from "../types/socket";
+import { ZodSchema } from "zod";
+import { AppError, ValidationError } from "../utils/AppError";
+import { getErrorsFromIssues } from "../utils/zod.utils";
 
 export function socketDataValidator(
   socket: SocketType,
@@ -30,10 +30,10 @@ export function socketDataValidator(
     if (Array.isArray(schemas)) {
       if (data.length !== schemas.length) {
         throw new AppError(
-          'AppError',
-          'Data length does not match schemas length in socketDataValidator',
+          "AppError",
+          "Data length does not match schemas length in socketDataValidator",
           400,
-          'socketDataValidator'
+          "socketDataValidator"
         );
       }
 
@@ -43,7 +43,10 @@ export function socketDataValidator(
 
         if (!parseResult.success) {
           if (!validationError) {
-            validationError = new ValidationError({}, 'Validation failed');
+            validationError = new ValidationError(
+              {},
+              `Validation failed in event: ${event}`
+            );
           }
           const errorObject = getErrorsFromIssues(parseResult.error.issues);
           validationError.errorDetails[index] = errorObject;
@@ -53,7 +56,10 @@ export function socketDataValidator(
       const parseResult = schemas.safeParse(data[0]);
       if (!parseResult.success) {
         const errorObject = getErrorsFromIssues(parseResult.error.issues);
-        validationError = new ValidationError(errorObject, 'Validation failed');
+        validationError = new ValidationError(
+          errorObject,
+          `Validation failed in event: ${event}`
+        );
       }
     }
 
