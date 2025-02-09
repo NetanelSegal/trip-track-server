@@ -2,6 +2,7 @@ import { Types } from 'trip-track-package';
 import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
+import { generateUUID } from '../utils/functions.utils';
 
 interface IRedisUserTripData {
   score: number[];
@@ -9,7 +10,7 @@ interface IRedisUserTripData {
 }
 
 interface IRedisTripExperience {
-  winners: [number, number, number];
+  winners: [string, string, string];
   active: boolean;
 }
 
@@ -36,16 +37,16 @@ interface TripService {
     tripId: string,
     userId: string
   ) => Promise<IRedisUserTripData>;
+  redisGetUserTripData: (
+    tripId: string,
+    userId: string
+  ) => Promise<IRedisUserTripData>;
   redisRemoveUserFromTrip: (tripId: string, userId: string) => Promise<boolean>;
   redisUpdateUserTripData: (
     tripId: string,
     userId: string,
     data: { score: number[]; finishedExperiences: boolean[] }
   ) => Promise<IRedisUserTripData>;
-  redisUpdateTripExperiences: (
-    tripId: string,
-    data: { winners: [string, string, string]; active: boolean }[]
-  ) => Promise<void>;
   redisGetLeaderboard: (tripId: string) => Promise<
     {
       score: number;
@@ -54,8 +55,16 @@ interface TripService {
   >;
   redisInitializeTripExperiences: (
     tripId: string,
-    countOfExperiences: number
+    countOfExperiences: number,
+    winnersInitialValue: IRedisTripExperience['winners'][0]
   ) => Promise<void>;
+  redisGetTripExperiences: (tripId: string) => Promise<IRedisTripExperience[]>;
+  redisUpdateTripExperiences: (
+    tripId: string,
+    experienceIndex: number,
+    data: IRedisTripExperience
+  ) => Promise<IRedisTripExperience>;
+  redisDeleteTrip: (tripId: string) => Promise<void>;
 }
 
 // mongo
@@ -250,6 +259,15 @@ export const redisUpdateUserTripData: TripService['redisUpdateUserTripData'] =
     return data;
   };
 
+export const redisGetUserTripData: TripService['redisGetUserTripData'] = async (
+  tripId,
+  userId
+) => {
+  const userKey = `trip_user:${tripId}:${userId}`;
+  const user = await RedisCache.getValueByKey<IRedisUserTripData>(userKey);
+  return user;
+};
+
 export const redisGetLeaderboard: TripService['redisGetLeaderboard'] = async (
   tripId
 ) => {
@@ -259,12 +277,16 @@ export const redisGetLeaderboard: TripService['redisGetLeaderboard'] = async (
 };
 
 export const redisInitializeTripExperiences: TripService['redisInitializeTripExperiences'] =
-  async (tripId, countOfExperiences) => {
+  async (tripId, countOfExperiences, winnersInitialValue) => {
     const tripExperiencesKey = `trip_experiences:${tripId}`;
     const tripExperiences: IRedisTripExperience[] = Array.from(
       { length: countOfExperiences },
       (_) => ({
-        winners: [-1, -1, -1],
+        winners: [
+          winnersInitialValue,
+          winnersInitialValue,
+          winnersInitialValue,
+        ],
         active: false,
       })
     );
@@ -274,3 +296,97 @@ export const redisInitializeTripExperiences: TripService['redisInitializeTripExp
       expirationTime: 60 * 60 * 24,
     });
   };
+
+export const redisGetTripExperiences: TripService['redisGetTripExperiences'] =
+  async (tripId) => {
+    const tripExperiencesKey = `trip_experiences:${tripId}`;
+    const tripExperiences =
+      await RedisCache.getValueByKey<IRedisTripExperience[]>(
+        tripExperiencesKey
+      );
+    if (!tripExperiences) {
+      throw new AppError('NotFount', 'Trip not found', 404, 'Redis');
+    }
+    return tripExperiences;
+  };
+
+export const redisUpdateTripExperiences: TripService['redisUpdateTripExperiences'] =
+  async (tripId, experienceIndex, experienceData) => {
+    const tripExperiencesKey = `trip_experiences:${tripId}`;
+    const tripExperiences = await RedisCache.getValueByKey(tripExperiencesKey);
+    if (!tripExperiences) {
+      throw new AppError('NotFount', 'Trip not found', 404, 'Redis');
+    }
+
+    tripExperiences[experienceIndex] = experienceData;
+
+    await RedisCache.setKeyWithValue({
+      key: tripExperiencesKey,
+      value: tripExperiences,
+      expirationTime: 60 * 60 * 24,
+    });
+    return tripExperiences[experienceIndex];
+  };
+
+export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (
+  tripId
+) => {
+  const tripExperiencesKey = `trip_experiences:${tripId}`;
+  const leaderboardKey = `trip_leaderboard:${tripId}`;
+  await RedisCache.deleteKey(tripExperiencesKey);
+  await RedisCache.deleteKey(leaderboardKey);
+};
+
+const testRedis = async () => {
+  try {
+    const usersCount = 3;
+    const usersIds = Array.from({ length: usersCount }, (_, i) =>
+      generateUUID()
+    );
+
+    const promises = usersIds.map((userId) =>
+      redisAddUserToTrip('tripId', userId)
+    );
+
+    await Promise.all(promises);
+
+    const updatePromises = usersIds.map((userId, i) => {
+      const random = [0, 0, 0].map(() => Math.floor(Math.random() * 100));
+      return redisUpdateUserTripData('tripId', userId, {
+        score: [...random],
+        finishedExperiences: [true, true, true],
+      });
+    });
+
+    await Promise.all(updatePromises);
+
+    const leaderboard = await redisGetLeaderboard('tripId');
+
+    await redisInitializeTripExperiences('tripId', 3, '');
+
+    const tripExperiences = await redisGetTripExperiences('tripId');
+
+    console.log(leaderboard);
+    console.log(tripExperiences);
+
+    usersIds.forEach(async (userId) => {
+      console.log(await redisGetUserTripData('tripId', userId));
+    });
+
+    await redisUpdateTripExperiences('tripId', 0, {
+      ...tripExperiences[0],
+      winners: [
+        usersIds[0],
+        ...(tripExperiences[0].winners.slice(1) as [string, string]),
+      ],
+    });
+
+    console.log(await redisGetTripExperiences('tripId'));
+
+    await redisDeleteTrip('tripId');
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+testRedis();

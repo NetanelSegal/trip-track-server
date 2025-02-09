@@ -124,10 +124,10 @@ class RedisDAL {
     }
   }
 
-  async deleteKey(key: string): Promise<void> {
+  async deleteKey(key: string): Promise<number> {
     try {
       await this.ensureConnected();
-      await this.redisClient.DEL(key);
+      return await this.redisClient.DEL(key);
     } catch (error) {
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
