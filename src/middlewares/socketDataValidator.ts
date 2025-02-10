@@ -1,7 +1,7 @@
-import { ClientToServerEvents, SocketType } from "../types/socket";
-import { ZodSchema } from "zod";
-import { AppError, ValidationError } from "../utils/AppError";
-import { getErrorsFromIssues } from "../utils/zod.utils";
+import { ClientToServerEvents, SocketType } from '../types/socket';
+import { ZodSchema } from 'zod';
+import { AppError, ValidationError } from '../utils/AppError';
+import { getErrorsFromIssues } from '../utils/zod.utils';
 
 export function socketDataValidator(
   socket: SocketType,
@@ -30,10 +30,10 @@ export function socketDataValidator(
     if (Array.isArray(schemas)) {
       if (data.length !== schemas.length) {
         throw new AppError(
-          "AppError",
-          "Data length does not match schemas length in socketDataValidator",
+          'AppError',
+          'Data length does not match schemas length in socketDataValidator',
           400,
-          "socketDataValidator"
+          'socketDataValidator'
         );
       }
 
