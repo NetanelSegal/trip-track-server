@@ -7,10 +7,6 @@ import { deleteImageSchema } from '../validationSchemas/uploadSchemas';
 const router = Router();
 
 router.post('/image', uploadMiddleware.single('file'), uploadImage);
-router.delete(
-  '/image',
-  validateRequest(deleteImageSchema, 'query'),
-  deleteImage
-);
+router.delete('/image', validateRequest(deleteImageSchema, 'query'), deleteImage);
 
 export { router as uploadRouter };

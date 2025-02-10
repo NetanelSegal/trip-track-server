@@ -1,21 +1,21 @@
-import { Request } from "express";
+import { Request } from 'express';
 
 interface BasePayload {
-  _id: string;
-  role: "user" | "guest";
+	_id: string;
+	role: 'user' | 'guest';
 }
 
 interface UserPayload extends BasePayload {
-  role: "user";
-  email: string;
+	role: 'user';
+	email: string;
 }
 
 interface GuestPayload extends BasePayload {
-  role: "guest";
+	role: 'guest';
 }
 
 export type Payload = UserPayload | GuestPayload;
 
 export interface RequestJWTPayload extends Request {
-  user: Payload;
+	user: Payload;
 }

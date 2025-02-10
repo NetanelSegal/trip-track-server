@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import {
-  getAddressSuggestions,
-  getGeocodeForAddress,
-} from '../controllers/google.controller';
+import { getAddressSuggestions, getGeocodeForAddress } from '../controllers/google.controller';
 import { authenticateToken } from '../middlewares/authenticateToken';
 
 const router = Router();

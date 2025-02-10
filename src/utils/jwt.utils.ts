@@ -1,9 +1,5 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import {
-  ACCESS_TOKEN_SECRET,
-  REFRESH_TOKEN_SECRET,
-  GUEST_TOKEN_SECRET,
-} from '../env.config';
+import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, GUEST_TOKEN_SECRET } from '../env.config';
 import { Payload } from '../types';
 
 /**
@@ -12,7 +8,7 @@ import { Payload } from '../types';
  * @returns The generated access token.
  */
 export const generateAccessToken = (payload: Payload) => {
-  return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+	return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
 };
 
 /**
@@ -21,11 +17,11 @@ export const generateAccessToken = (payload: Payload) => {
  * @returns The generated refresh token.
  */
 export const generateRefreshToken = (payload: Payload) => {
-  return jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+	return jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 };
 
 export const generateGuestToken = (payload: Payload) => {
-  return jwt.sign(payload, GUEST_TOKEN_SECRET, { expiresIn: '7d' });
+	return jwt.sign(payload, GUEST_TOKEN_SECRET, { expiresIn: '7d' });
 };
 
 /**
@@ -36,12 +32,11 @@ export const generateGuestToken = (payload: Payload) => {
  */
 
 export const verifyToken = (token: string, secret: string): Payload | null => {
-  try {
-    const { exp, iat, ...payload } = jwt.verify(token, secret) as JwtPayload &
-      Payload;
-    return payload;
-  } catch (error) {
-    console.error('Token verification failed:', error.message);
-    return null;
-  }
+	try {
+		const { exp, iat, ...payload } = jwt.verify(token, secret) as JwtPayload & Payload;
+		return payload;
+	} catch (error) {
+		console.error('Token verification failed:', error.message);
+		return null;
+	}
 };
