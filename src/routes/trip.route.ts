@@ -1,10 +1,12 @@
-import { Router } from 'express';
+import { Request, Router } from 'express';
 import {
   createTrip,
   deleteTrip,
   getTrips,
   updateTrip,
   getTripById,
+  addUserToTrip,
+  removeUserFromTrip,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -20,6 +22,18 @@ router.get(
   validateRequest(Schemas.mongoObjectId, 'params'),
   authenticateToken,
   getTripById
+);
+router.post(
+  '/user-join/:id',
+  validateRequest(Schemas.mongoObjectId, 'params'),
+  authenticateToken,
+  addUserToTrip
+);
+router.delete(
+  '/user-leave/:id',
+  validateRequest(Schemas.mongoObjectId, 'params'),
+  authenticateToken,
+  removeUserFromTrip
 );
 
 router.post(

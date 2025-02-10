@@ -2,6 +2,7 @@ import { createClient, RedisClientType } from 'redis';
 import { REDIS_URL } from '../env.config';
 import { Logger } from '../utils/Logger';
 import { AppError } from '../utils/AppError';
+import { String } from 'aws-sdk/clients/batch';
 
 interface IRedisCacheProps<T> {
   key: string;
@@ -101,11 +102,15 @@ class RedisDAL {
     key,
     callbackFn,
     expirationTime,
-  }: IRedisCacheProps<T>): Promise<void> {
+  }: IRedisCacheProps<T>): Promise<string> {
     try {
       await this.ensureConnected();
       const value = await callbackFn();
-      await this.redisClient.SETEX(key, expirationTime, JSON.stringify(value));
+      return await this.redisClient.SETEX(
+        key,
+        expirationTime,
+        JSON.stringify(value)
+      );
     } catch (error) {
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
@@ -115,10 +120,14 @@ class RedisDAL {
     key,
     value,
     expirationTime,
-  }: IRedisSetValueProps<T>): Promise<void> {
+  }: IRedisSetValueProps<T>): Promise<string> {
     try {
       await this.ensureConnected();
-      await this.redisClient.SETEX(key, expirationTime, JSON.stringify(value));
+      return await this.redisClient.SETEX(
+        key,
+        expirationTime,
+        JSON.stringify(value)
+      );
     } catch (error) {
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
@@ -133,20 +142,21 @@ class RedisDAL {
     }
   }
 
-  async addToSortedSet(key: string, member: ISortedSetMember): Promise<void> {
+  async addToSortedSet(key: string, member: ISortedSetMember): Promise<number> {
     try {
       await this.ensureConnected();
-      await this.redisClient.zAdd(key, member);
+      return await this.redisClient.zAdd(key, member);
     } catch (error) {
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
 
-  async removeFromSortedSet(key: string, member: string): Promise<void> {
+  async removeFromSortedSet(key: string, member: string): Promise<number> {
     try {
       await this.ensureConnected();
-      await this.redisClient.zRem(key, member);
+      return await this.redisClient.zRem(key, member);
     } catch (error) {
+      if (error instanceof AppError) throw error;
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
   }
@@ -155,10 +165,13 @@ class RedisDAL {
     key: string,
     member: string,
     newScore: number
-  ): Promise<void> {
+  ): Promise<number> {
     try {
       await this.ensureConnected();
-      await this.redisClient.zAdd(key, { score: newScore, value: member });
+      return await this.redisClient.zAdd(key, {
+        score: newScore,
+        value: member,
+      });
     } catch (error) {
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
