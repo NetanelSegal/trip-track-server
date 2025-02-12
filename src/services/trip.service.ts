@@ -96,7 +96,9 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (
       );
     }
 
-    if ((await trip.updateOne(data)).modifiedCount === 0) {
+    const updateResult = await trip.updateOne(data);
+
+    if (updateResult.modifiedCount === 0) {
       throw new AppError(
         'InternalError',
         'Error updating trip',
@@ -227,8 +229,20 @@ export const redisRemoveUserFromTrip: TripService['redisRemoveUserFromTrip'] =
     const userKey = `trip_user:${tripId}:${userId}`;
     const leaderboardKey = `trip_leaderboard:${tripId}`;
 
-    await RedisCache.deleteKey(userKey);
-    await RedisCache.removeFromSortedSet(leaderboardKey, userId);
+    let res = await RedisCache.deleteKey(userKey);
+    if (res === 0)
+      throw new AppError(
+        'TripRedisError',
+        "Couldn't delete user data from redis"
+      );
+
+    res = await RedisCache.removeFromSortedSet(leaderboardKey, userId);
+    if (res === 0)
+      throw new AppError(
+        'TripRedisError',
+        "Couldn't delete user data from redis"
+      );
+
     return true;
   };
 
