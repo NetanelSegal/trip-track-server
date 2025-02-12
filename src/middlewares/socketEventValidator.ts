@@ -1,10 +1,11 @@
-import { ClientToServerEvents, SocketType } from '../types/socket';
+import {
+  ClientToServerEvents,
+  ClientEvents,
+  SocketType,
+} from '../types/socket';
 import { AppError } from '../utils/AppError';
 
-const validClientEvents: (keyof ClientToServerEvents)[] = [
-  'joinTrip',
-  'updateLocation',
-];
+const validClientEvents = Object.values(ClientEvents);
 
 export const socketEventValidator = (socket: SocketType) => {
   socket.use(([event], next) => {
