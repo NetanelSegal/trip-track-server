@@ -2,7 +2,6 @@ import { Types } from 'trip-track-package';
 import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
-import { generateUUID } from '../utils/functions.utils';
 
 interface IRedisUserTripData {
   score: number[];
@@ -14,22 +13,22 @@ interface IRedisTripExperience {
   active: boolean;
 }
 
+type TripT = Types['Trip']['Model'];
+
 interface TripService {
   // mongo related functions
-  mongoCreateTrip: (
-    data: Types['Trip']['Model']
-  ) => Promise<Types['Trip']['Model']>;
+  mongoCreateTrip: (data: TripT) => Promise<TripT>;
   mongoUpdateTrip: (
     userId: string,
     tripId: string,
-    data: Types['Trip']['Model']
-  ) => Promise<Types['Trip']['Model']>;
-  mongoGetTripById: (id: string) => Promise<Types['Trip']['Model']>;
+    data: TripT
+  ) => Promise<TripT>;
+  mongoGetTripById: (id: string) => Promise<TripT>;
   mongoGetTrips: (
     userId: string,
     page?: number,
     limit?: number
-  ) => Promise<Types['Trip']['Model'][]>;
+  ) => Promise<TripT[]>;
   mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
 
   // redis related functions
@@ -336,57 +335,3 @@ export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (
   await RedisCache.deleteKey(tripExperiencesKey);
   await RedisCache.deleteKey(leaderboardKey);
 };
-
-const testRedis = async () => {
-  try {
-    const usersCount = 3;
-    const usersIds = Array.from({ length: usersCount }, (_, i) =>
-      generateUUID()
-    );
-
-    const promises = usersIds.map((userId) =>
-      redisAddUserToTrip('tripId', userId)
-    );
-
-    await Promise.all(promises);
-
-    const updatePromises = usersIds.map((userId, i) => {
-      const random = [0, 0, 0].map(() => Math.floor(Math.random() * 100));
-      return redisUpdateUserTripData('tripId', userId, {
-        score: [...random],
-        finishedExperiences: [true, true, true],
-      });
-    });
-
-    await Promise.all(updatePromises);
-
-    const leaderboard = await redisGetLeaderboard('tripId');
-
-    await redisInitializeTripExperiences('tripId', 3, '');
-
-    const tripExperiences = await redisGetTripExperiences('tripId');
-
-    console.log(leaderboard);
-    console.log(tripExperiences);
-
-    usersIds.forEach(async (userId) => {
-      console.log(await redisGetUserTripData('tripId', userId));
-    });
-
-    await redisUpdateTripExperiences('tripId', 0, {
-      ...tripExperiences[0],
-      winners: [
-        usersIds[0],
-        ...(tripExperiences[0].winners.slice(1) as [string, string]),
-      ],
-    });
-
-    console.log(await redisGetTripExperiences('tripId'));
-
-    await redisDeleteTrip('tripId');
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-testRedis();
