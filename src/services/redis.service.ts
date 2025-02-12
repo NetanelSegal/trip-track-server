@@ -15,11 +15,16 @@ interface IRedisSetValueProps<T> {
   expirationTime: number;
 }
 
+interface ISortedSetMember {
+  score: number;
+  value: string;
+}
+
 class RedisDAL {
   private static MAX_RECONNECT_ATTEMPTS = 3;
   private reconnectAttempts = 0;
   private redisClient: RedisClientType;
-  // connect to redis
+
   constructor() {
     this.redisClient = createClient({
       socket: {
@@ -119,10 +124,53 @@ class RedisDAL {
     }
   }
 
-  async deleteKey(key: string): Promise<void> {
+  async deleteKey(key: string): Promise<number> {
     try {
       await this.ensureConnected();
-      await this.redisClient.DEL(key);
+      return await this.redisClient.DEL(key);
+    } catch (error) {
+      throw new AppError(error.name, error.message, 500, 'Redis');
+    }
+  }
+
+  async addToSortedSet(key: string, member: ISortedSetMember): Promise<void> {
+    try {
+      await this.ensureConnected();
+      await this.redisClient.zAdd(key, member);
+    } catch (error) {
+      throw new AppError(error.name, error.message, 500, 'Redis');
+    }
+  }
+
+  async removeFromSortedSet(key: string, member: string): Promise<void> {
+    try {
+      await this.ensureConnected();
+      await this.redisClient.zRem(key, member);
+    } catch (error) {
+      throw new AppError(error.name, error.message, 500, 'Redis');
+    }
+  }
+
+  async updateScoreInSortedSet(
+    key: string,
+    member: string,
+    newScore: number
+  ): Promise<void> {
+    try {
+      await this.ensureConnected();
+      await this.redisClient.zAdd(key, { score: newScore, value: member });
+    } catch (error) {
+      throw new AppError(error.name, error.message, 500, 'Redis');
+    }
+  }
+
+  async getMembersFromSortedSet(
+    key: string
+  ): Promise<Array<{ score: number; value: string }>> {
+    try {
+      await this.ensureConnected();
+      const members = await this.redisClient.zRangeWithScores(key, 0, -1);
+      return members;
     } catch (error) {
       throw new AppError(error.name, error.message, 500, 'Redis');
     }
