@@ -43,7 +43,10 @@ export function socketDataValidator(
 
         if (!parseResult.success) {
           if (!validationError) {
-            validationError = new ValidationError({}, 'Validation failed');
+            validationError = new ValidationError(
+              {},
+              `Validation failed in event: ${event}`
+            );
           }
           const errorObject = getErrorsFromIssues(parseResult.error.issues);
           validationError.errorDetails[index] = errorObject;
@@ -53,7 +56,10 @@ export function socketDataValidator(
       const parseResult = schemas.safeParse(data[0]);
       if (!parseResult.success) {
         const errorObject = getErrorsFromIssues(parseResult.error.issues);
-        validationError = new ValidationError(errorObject, 'Validation failed');
+        validationError = new ValidationError(
+          errorObject,
+          `Validation failed in event: ${event}`
+        );
       }
     }
 

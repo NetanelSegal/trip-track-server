@@ -6,20 +6,18 @@ import {
   ClientToServerEvents,
   InterServerEvents,
   ServerToClientEvents,
-  SocketData,
   SocketServer,
   SocketType,
 } from '../types/socket';
 import { socketEventValidator } from '../middlewares/socketEventValidator';
 import { socketDataValidator } from '../middlewares/socketDataValidator';
-import { z } from 'zod';
+import { socketDataSchema } from '../validationSchemas/socketSchemas';
 
 export const createSocket = (server: http.Server): SocketServer => {
   const io = new Server<
     ClientToServerEvents,
     ServerToClientEvents,
-    InterServerEvents,
-    SocketData
+    InterServerEvents
   >(server, {
     cors: {
       methods: ['GET', 'POST'],
@@ -37,41 +35,37 @@ export const socketInit = (io: SocketServer): void => {
 
     socketEventValidator(socket);
 
-    // TODO: replace with relevant schema (package?)
-    socketDataValidator(
-      socket,
-      'joinTrip',
-      z.string({
-        message: 'tripId must be a string',
-      })
-    );
+    socketDataValidator(socket, 'joinTrip', socketDataSchema.joinTrip);
     socket.on('joinTrip', (tripId) => {
-      // TODO:Attach data validator middleware
-      //  on every event if needed
-      // TODO: set up schemas in package if needed
-
       socket.join(tripId);
       socket.to(tripId).emit('tripJoined', socket.id);
 
       Logger.info(`User ${socket.id} joined trip room: ${tripId}`);
     });
 
-    // TODO: replace with relevant schema (package?)
-    socketDataValidator(socket, 'updateLocation', [
-      z.string({
-        message: 'tripId must be a string',
-      }),
-      z.object({
-        lon: z.number({
-          message: 'Longitude must be a number',
-        }),
-        lat: z.number({
-          message: 'Latitude must be a number',
-        }),
-      }),
-    ]);
+    socketDataValidator(
+      socket,
+      'updateLocation',
+      socketDataSchema.updateLocation
+    );
     socket.on('updateLocation', (tripId, location) => {
       socket.to(tripId).emit('locationUpdated', socket.id, location);
+    });
+
+    socketDataValidator(
+      socket,
+      'finishExperience',
+      socketDataSchema.finishExperience
+    );
+    socket.on('finishExperience', (tripId) => {
+      socket.to(tripId).emit('experienceFinished', socket.id);
+    });
+
+    socketDataValidator(socket, 'sendMessage', socketDataSchema.sendMessage);
+    socket.on('sendMessage', (tripId, message) => {
+      console.log(tripId, message);
+
+      io.to(tripId).emit('messageSent', message);
     });
 
     socket.on('disconnect', () => {

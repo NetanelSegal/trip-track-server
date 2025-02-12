@@ -2,7 +2,6 @@ import { Types } from 'trip-track-package';
 import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
-import { generateUUID } from '../utils/functions.utils';
 
 interface IRedisUserTripData {
   score: number[];
@@ -14,22 +13,22 @@ interface IRedisTripExperience {
   active: boolean;
 }
 
+type TripT = Types['Trip']['Model'];
+
 interface TripService {
   // mongo related functions
-  mongoCreateTrip: (
-    data: Types['Trip']['Model']
-  ) => Promise<Types['Trip']['Model']>;
+  mongoCreateTrip: (data: TripT) => Promise<TripT>;
   mongoUpdateTrip: (
     userId: string,
     tripId: string,
-    data: Types['Trip']['Model']
-  ) => Promise<Types['Trip']['Model']>;
-  mongoGetTripById: (id: string) => Promise<Types['Trip']['Model']>;
+    data: TripT
+  ) => Promise<TripT>;
+  mongoGetTripById: (id: string) => Promise<TripT>;
   mongoGetTrips: (
     userId: string,
     page?: number,
     limit?: number
-  ) => Promise<Types['Trip']['Model'][]>;
+  ) => Promise<TripT[]>;
   mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
 
   // redis related functions
@@ -47,9 +46,12 @@ interface TripService {
     userId: string,
     data: { score: number[]; finishedExperiences: boolean[] }
   ) => Promise<IRedisUserTripData>;
-  redisGetLeaderboard: (
-    tripId: string
-  ) => Promise<{ score: number; value: string }[]>;
+  redisGetLeaderboard: (tripId: string) => Promise<
+    {
+      score: number;
+      value: string;
+    }[]
+  >;
   redisInitializeTripExperiences: (
     tripId: string,
     countOfExperiences: number,

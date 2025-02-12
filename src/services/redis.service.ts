@@ -2,7 +2,6 @@ import { createClient, RedisClientType } from 'redis';
 import { REDIS_URL } from '../env.config';
 import { Logger } from '../utils/Logger';
 import { AppError } from '../utils/AppError';
-import { String } from 'aws-sdk/clients/batch';
 
 interface IRedisCacheProps<T> {
   key: string;
@@ -14,6 +13,11 @@ interface IRedisSetValueProps<T> {
   key: string;
   value: T;
   expirationTime: number;
+}
+
+interface ISortedSetMember {
+  score: number;
+  value: string;
 }
 
 interface ISortedSetMember {
