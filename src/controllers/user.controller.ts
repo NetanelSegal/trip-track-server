@@ -35,7 +35,6 @@ export const getRandomUserName = async (req: Request, res: Response) => {
 	try {
 		const { data } = await axios.get('https://fantasyname.lukewh.com/');
 		res.json(data);
-		console.log(data);
 	} catch (error) {
 		if (error instanceof AppError) {
 			throw error;
