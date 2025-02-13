@@ -6,8 +6,9 @@ import { Schemas } from 'trip-track-package';
 
 const router = Router();
 
-router.get('/:userId', getUserProfile);
 router.get('/random-name', getRandomUserName);
+
+router.get('/:userId', getUserProfile);
 router.put('/profile', authenticateToken, validateRequest(Schemas.user), updateUserProfile);
 
 export { router as userRouter };

@@ -35,12 +35,11 @@ export const getRandomUserName = async (req: Request, res: Response) => {
 	try {
 		const { data } = await axios.get('https://fantasyname.lukewh.com/');
 		res.json(data);
+		console.log(data);
 	} catch (error) {
 		if (error instanceof AppError) {
 			throw error;
 		}
 		throw new AppError('AppError', error.message, 500, 'RandomName');
 	}
-	const randomName = Math.random().toString(36).substring(7);
-	res.json({ name: randomName });
 };
