@@ -6,6 +6,7 @@ import './db/mongo-connect';
 import { indexRouter } from './routes/index.route';
 import { Logger } from './utils/Logger';
 import { createSocket, socketInit } from './services/socket.service';
+import axios from 'axios';
 
 const PORT = process.env.PORT || 3000;
 
@@ -14,10 +15,10 @@ const app = express();
 // middlewares
 app.use(cookieParser());
 app.use(
-  cors({
-    origin: ['http://localhost:5173'],
-    credentials: true,
-  })
+	cors({
+		origin: ['http://localhost:5173'],
+		credentials: true,
+	})
 );
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -26,7 +27,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(indexRouter);
 
 const server = app.listen(PORT, () => {
-  Logger.success(`server is up on: http://localhost:${PORT}`);
+	Logger.success(`server is up on: http://localhost:${PORT}`);
 });
 
 // socket
