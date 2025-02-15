@@ -14,14 +14,16 @@ import { Schemas } from 'trip-track-package';
 import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
-import { z } from 'zod';
 import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 
 const router = Router();
 
 router.get('/getAll', authenticateToken, getTrips);
+
 router.get('/:id', validateRequest(Schemas.mongoObjectId, 'params'), authenticateToken, getTripById);
+
 router.post('/user-join/:id', validateRequest(Schemas.mongoObjectId, 'params'), authenticateToken, addUserToTrip);
+
 router.delete(
 	'/user-leave/:id',
 	validateRequest(Schemas.mongoObjectId, 'params'),
