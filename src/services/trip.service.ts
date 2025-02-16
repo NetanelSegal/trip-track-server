@@ -3,7 +3,8 @@ import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 
-interface IRedisUserTripData {
+export interface IRedisUserTripData {
+	name: string;
 	score: number[];
 	finishedExperiences: boolean[];
 }
@@ -25,13 +26,13 @@ interface TripService {
 	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
 
 	// redis related functions
-	redisAddUserToTrip: (tripId: string, userId: string) => Promise<IRedisUserTripData>;
+	redisAddUserToTrip: (tripId: string, userId: string, name: string) => Promise<IRedisUserTripData>;
 	redisGetUserTripData: (tripId: string, userId: string) => Promise<IRedisUserTripData>;
 	redisRemoveUserFromTrip: (tripId: string, userId: string) => Promise<boolean>;
 	redisUpdateUserTripData: (
 		tripId: string,
 		userId: string,
-		data: { score: number[]; finishedExperiences: boolean[] }
+		data: Partial<IRedisUserTripData>
 	) => Promise<IRedisUserTripData>;
 	redisGetLeaderboard: (tripId: string) => Promise<
 		{
@@ -90,8 +91,6 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) => {
 	try {
 		const trip = await Trip.findById(tripId);
-		console.log(trip);
-
 		if (!trip) {
 			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
 		}
@@ -165,15 +164,15 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
 	}
 };
-
 // redis
-export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (tripId, userId) => {
+export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (tripId, userId, name) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
 
 	const userTripData: IRedisUserTripData = {
 		score: [],
 		finishedExperiences: [],
+		name,
 	};
 
 	await RedisCache.setKeyWithValue({
@@ -202,7 +201,7 @@ export const redisRemoveUserFromTrip: TripService['redisRemoveUserFromTrip'] = a
 
 export const redisUpdateUserTripData: TripService['redisUpdateUserTripData'] = async (tripId, userId, data) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
-	const user = await RedisCache.getValueByKey(userKey);
+	const user = await RedisCache.getValueByKey<IRedisUserTripData>(userKey);
 
 	if (!user) {
 		throw new AppError('NotFount', 'User not found', 404, 'Redis');
@@ -210,19 +209,21 @@ export const redisUpdateUserTripData: TripService['redisUpdateUserTripData'] = a
 
 	await RedisCache.setKeyWithValue({
 		key: userKey,
-		value: data,
+		value: { ...user, ...data },
 		expirationTime: 60 * 60 * 24,
 	});
 
-	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	if (data.score?.length) {
+		const leaderboardKey = `trip_leaderboard:${tripId}`;
 
-	const newTotalScore = data.score.reduce((a, b) => a + b, 0);
-	await RedisCache.addToSortedSet(leaderboardKey, {
-		score: newTotalScore,
-		value: userId,
-	});
+		const newTotalScore = data.score.reduce((a, b) => a + b, 0);
+		await RedisCache.addToSortedSet(leaderboardKey, {
+			score: newTotalScore,
+			value: userId,
+		});
+	}
 
-	return data;
+	return { ...user, ...data };
 };
 
 export const redisGetUserTripData: TripService['redisGetUserTripData'] = async (tripId, userId) => {

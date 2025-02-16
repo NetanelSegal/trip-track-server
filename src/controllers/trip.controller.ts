@@ -11,6 +11,8 @@ import {
 	redisGetLeaderboard,
 	redisGetTripExperiences,
 	redisRemoveUserFromTrip,
+	redisGetUserTripData,
+	redisUpdateUserTripData,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -84,7 +86,20 @@ export const updateTrip = async (req: Request, res: Response, next: NextFunction
 
 export const addUserToTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const userData = await redisAddUserToTrip(req.params.id, (req as RequestJWTPayload).user._id);
+		const userData = await redisAddUserToTrip(
+			req.params.id,
+			(req as RequestJWTPayload).user._id,
+			(req as RequestJWTPayload).user.name
+		);
+		res.json(userData);
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const getUserTripData = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const userData = await redisGetUserTripData(req.params.id, (req as RequestJWTPayload).user._id);
 		res.json(userData);
 	} catch (error) {
 		next(error);
@@ -97,6 +112,16 @@ export const removeUserFromTrip = async (req: Request, res: Response, next: Next
 		res.json({
 			message: `user ${(req as RequestJWTPayload).user._id} was seccussfuly deleted from trip ${req.params.id}`,
 		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const updateGuestUserNameInTrip = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { name } = req.body;
+		const userData = await redisUpdateUserTripData(req.params.id, (req as RequestJWTPayload).user._id, { name });
+		res.json(userData);
 	} catch (error) {
 		next(error);
 	}

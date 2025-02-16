@@ -14,8 +14,8 @@ const router = Router();
 
 router.post('/send-code', validateRequest(Schemas.auth.sendCodeSchema), sendCode);
 router.post('/verify-code', validateRequest(Schemas.auth.verifyCodeSchema), verifyCode);
-router.get('/create-user-tokens', authenticateToken, generateUserTokens);
+router.get('/create-user-tokens', authenticateToken(), generateUserTokens);
 router.get('/create-guest-token', createGuestToken);
-router.get('/validate-token', authenticateToken, validateToken);
+router.get('/validate-token', authenticateToken({ allowGuest: true }), validateToken);
 
 export { router as authRouter };
