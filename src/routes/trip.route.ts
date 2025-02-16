@@ -1,63 +1,73 @@
 import { Request, Router } from 'express';
 import {
-  createTrip,
-  deleteTrip,
-  getTrips,
-  updateTrip,
-  getTripById,
-  addUserToTrip,
-  removeUserFromTrip,
+	createTrip,
+	deleteTrip,
+	getTrips,
+	updateTrip,
+	getTripById,
+	addUserToTrip,
+	removeUserFromTrip,
+	updateGuestUserNameInTrip,
+	getUserTripData,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
 import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
+import { redisUserTripDataSchema } from '../validationSchemas/redisTripSchemas';
 
 const router = Router();
 
-router.get('/getAll', authenticateToken, getTrips);
+router.get('/getAll', authenticateToken(), getTrips);
 router.get(
-  '/:id',
-  validateRequest(Schemas.mongoObjectId, 'params'),
-  authenticateToken,
-  getTripById
+	'/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	getTripById
 );
-router.post(
-  '/user-join/:id',
-  validateRequest(Schemas.mongoObjectId, 'params'),
-  authenticateToken,
-  addUserToTrip
-);
-router.delete(
-  '/user-leave/:id',
-  validateRequest(Schemas.mongoObjectId, 'params'),
-  authenticateToken,
-  removeUserFromTrip
+router.get(
+	'/:id/user',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	getUserTripData
 );
 
 router.post(
-  '/create',
-  authenticateToken,
-  uploadMiddleware.single('rewardImage'),
-  parseFormData,
-  validateRequest(Schemas.trip.createTripSchema),
-  createTrip
+	'/user-join/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	addUserToTrip
+);
+router.post(
+	'/create',
+	authenticateToken(),
+	uploadMiddleware.single('rewardImage'),
+	parseFormData,
+	validateRequest(Schemas.trip.createTripSchema),
+	createTrip
 );
 
 router.put(
-  '/:id',
-  authenticateToken,
-  validateRequest(Schemas.mongoObjectId, 'params'),
-  validateRequest(Schemas.trip.createTripSchema),
-  updateTrip
+	'/:id/guest-name',
+	authenticateToken({ allowGuest: true }),
+	validateRequest(redisUserTripDataSchema),
+	updateGuestUserNameInTrip
+);
+router.put(
+	'/:id',
+	authenticateToken(),
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	validateRequest(Schemas.trip.createTripSchema),
+	updateTrip
 );
 
 router.delete(
-  '/:id',
-  validateRequest(Schemas.mongoObjectId, 'params'),
-  authenticateToken,
-  deleteTrip
+	'/user-leave/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	removeUserFromTrip
 );
+router.delete('/:id', validateRequest(Schemas.mongoObjectId, 'params'), authenticateToken(), deleteTrip);
 
 export { router as tripRouter };

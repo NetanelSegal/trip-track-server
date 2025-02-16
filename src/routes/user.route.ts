@@ -9,6 +9,6 @@ const router = Router();
 router.get('/random-name', getRandomUserName);
 
 router.get('/:userId', getUserProfile);
-router.put('/profile', authenticateToken, validateRequest(Schemas.user), updateUserProfile);
+router.put('/profile', authenticateToken(), validateRequest(Schemas.user), updateUserProfile);
 
 export { router as userRouter };
