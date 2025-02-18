@@ -6,7 +6,6 @@ import './db/mongo-connect';
 import { indexRouter } from './routes/index.route';
 import { Logger } from './utils/Logger';
 import { createSocket, socketInit } from './services/socket.service';
-import axios from 'axios';
 
 const PORT = process.env.PORT || 3000;
 

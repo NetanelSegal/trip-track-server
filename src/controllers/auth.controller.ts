@@ -53,6 +53,8 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 			role: 'user',
 		});
 
+		user.role = 'user';
+
 		res
 			.cookie('accessToken', accessToken, {
 				httpOnly: true,
