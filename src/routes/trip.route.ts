@@ -22,12 +22,7 @@ import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 const router = Router();
 
 router.get('/getAll', authenticateToken(), getTrips);
-router.get(
-	'/:id',
-	validateRequest(Schemas.mongoObjectId, 'params'),
-	authenticateToken({ allowGuest: true }),
-	getTripById
-);
+router.get('/:id', validateRequest(Schemas.mongoObjectId, 'params'), getTripById);
 router.get(
 	'/:id/user',
 	validateRequest(Schemas.mongoObjectId, 'params'),
