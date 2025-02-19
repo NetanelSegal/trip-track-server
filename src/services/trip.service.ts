@@ -17,20 +17,13 @@ interface IRedisTripExperience {
 type TripT = Types['Trip']['Model'];
 
 interface TripService {
-  // mongo related functions
-  mongoCreateTrip: (data: TripT) => Promise<TripT>;
-  mongoUpdateTrip: (
-    userId: string,
-    tripId: string,
-    data: TripT
-  ) => Promise<TripT>;
-  mongoGetTripById: (id: string) => Promise<TripT>;
-  mongoGetTrips: (
-    userId: string,
-    page?: number,
-    limit?: number
-  ) => Promise<TripT[]>;
-  mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
+	// mongo related functions
+	mongoCreateTrip: (data: TripT) => Promise<TripT>;
+	mongoUpdateTrip: (userId: string, tripId: string, data: TripT) => Promise<TripT>;
+	mongoGetTripById: (id: string) => Promise<TripT>;
+	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
+	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
+	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
 
 	// redis related functions
 	redisAddUserToTrip: (tripId: string, userId: string, name: string) => Promise<IRedisUserTripData>;
@@ -78,14 +71,9 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
 		}
 
-    if (trip.creator.toString() !== userId) {
-      throw new AppError(
-        'Unauthorized',
-        'You are not authorized to update this trip',
-        403,
-        'MongoDB'
-      );
-    }
+		if (trip.creator.toString() !== userId) {
+			throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
+		}
 
 		const updateResult = await trip.updateOne(data);
 
@@ -93,36 +81,24 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
 		}
 
-    return trip;
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError(
-      error.name,
-      error.message,
-      error.statusCode || 500,
-      'MongoDB'
-    );
-  }
+		return trip;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
 };
 
-export const mongoGetTripById: TripService['mongoGetTripById'] = async (
-  tripId
-) => {
-  try {
-    const trip = await Trip.findById(tripId);
-    if (!trip) {
-      throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
-    }
-    return trip;
-  } catch (error: any) {
-    if (error instanceof AppError) throw error;
-    throw new AppError(
-      error.name,
-      error.message,
-      error.statusCode || 500,
-      'MongoDB'
-    );
-  }
+export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) => {
+	try {
+		const trip = await Trip.findById(tripId);
+		if (!trip) {
+			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
+		}
+		return trip;
+	} catch (error: any) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
 };
 export const mongoGetTrips: TripService['mongoGetTrips'] = async (userId, page = 1, limit = 10) => {
 	try {
@@ -295,23 +271,26 @@ export const redisGetTripExperiences: TripService['redisGetTripExperiences'] = a
 	return tripExperiences;
 };
 
-export const redisUpdateTripExperiences: TripService['redisUpdateTripExperiences'] =
-  async (tripId, experienceIndex, experienceData) => {
-    const tripExperiencesKey = `trip_experiences:${tripId}`;
-    const tripExperiences = await RedisCache.getValueByKey(tripExperiencesKey);
-    if (!tripExperiences) {
-      throw new AppError('NotFount', 'Trip not found', 404, 'Redis');
-    }
+export const redisUpdateTripExperiences: TripService['redisUpdateTripExperiences'] = async (
+	tripId,
+	experienceIndex,
+	experienceData
+) => {
+	const tripExperiencesKey = `trip_experiences:${tripId}`;
+	const tripExperiences = await RedisCache.getValueByKey(tripExperiencesKey);
+	if (!tripExperiences) {
+		throw new AppError('NotFount', 'Trip not found', 404, 'Redis');
+	}
 
-    tripExperiences[experienceIndex] = experienceData;
+	tripExperiences[experienceIndex] = experienceData;
 
-    await RedisCache.setKeyWithValue({
-      key: tripExperiencesKey,
-      value: tripExperiences,
-      expirationTime: 60 * 60 * 24,
-    });
-    return tripExperiences[experienceIndex];
-  };
+	await RedisCache.setKeyWithValue({
+		key: tripExperiencesKey,
+		value: tripExperiences,
+		expirationTime: 60 * 60 * 24,
+	});
+	return tripExperiences[experienceIndex];
+};
 
 export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) => {
 	const tripExperiencesKey = `trip_experiences:${tripId}`;
