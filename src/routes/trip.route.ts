@@ -1,4 +1,4 @@
-import { Request, Router } from 'express';
+import { Router } from 'express';
 import {
 	createTrip,
 	deleteTrip,
@@ -9,6 +9,7 @@ import {
 	removeUserFromTrip,
 	updateGuestUserNameInTrip,
 	getUserTripData,
+	updateTripStatus,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -16,6 +17,7 @@ import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
 import { redisUserTripDataSchema } from '../validationSchemas/redisTripSchemas';
+import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 
 const router = Router();
 
@@ -68,6 +70,15 @@ router.delete(
 	authenticateToken({ allowGuest: true }),
 	removeUserFromTrip
 );
+
 router.delete('/:id', validateRequest(Schemas.mongoObjectId, 'params'), authenticateToken(), deleteTrip);
+
+router.put(
+	'/status/:id',
+	authenticateToken(),
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	validateRequest(tripUpdateStatusSchema, 'body'),
+	updateTripStatus
+);
 
 export { router as tripRouter };
