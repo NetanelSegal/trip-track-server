@@ -6,7 +6,7 @@ import { RequestJWTPayload } from '../types';
 import { saveUserDataInRedis, sendEmailWithCodeToUser, validateCodeWithRedis } from '../services/auth.service';
 import { ENV } from '../env.config';
 import { Types } from 'trip-track-package';
-import { AppError } from '../utils/AppError';
+import { Document } from 'mongoose';
 
 const REDIS_EXP_TIME_MIN = 10;
 
@@ -53,8 +53,6 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 			role: 'user',
 		});
 
-		user.role = 'user';
-
 		res
 			.cookie('accessToken', accessToken, {
 				httpOnly: true,
@@ -69,7 +67,17 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 				maxAge: 7 * 24 * 60 * 60 * 1000,
 			})
 			.status(200)
-			.json({ user, isNewUser: isNew });
+			.json({
+				user: {
+					_id: user._id.toString(),
+					email,
+					role: 'user',
+					...(user.name && user.imageUrl ? { name: user.name, imageUrl: user.imageUrl } : {}),
+				},
+				updatedAt: user.updatedAt,
+				createdAt: user.createdAt,
+				isNewUser: isNew,
+			});
 	} catch (error) {
 		next(error);
 	}
