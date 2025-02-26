@@ -6,7 +6,6 @@ import { RequestJWTPayload } from '../types';
 import { saveUserDataInRedis, sendEmailWithCodeToUser, validateCodeWithRedis } from '../services/auth.service';
 import { ENV } from '../env.config';
 import { Types } from 'trip-track-package';
-import { Document } from 'mongoose';
 
 const REDIS_EXP_TIME_MIN = 10;
 
@@ -43,14 +42,13 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 		const accessToken = generateAccessToken({
 			_id: user._id.toString(),
 			email,
-			role: 'user',
-			...(user.name && user.imageUrl ? { name: user.name, imageUrl: user.imageUrl } : {}),
+			role: user.role,
 		});
 
 		const refreshToken = generateRefreshToken({
 			_id: user._id.toString(),
 			email,
-			role: 'user',
+			role: user.role,
 		});
 
 		res
@@ -101,8 +99,20 @@ export const createGuestToken = async (req: Request, res: Response) => {
 		});
 };
 
-export const validateToken = async (req: Request, res: Response) => {
-	res.status(200).json((req as RequestJWTPayload).user);
+export const validateToken = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { user } = req as RequestJWTPayload;
+		if (!user.role || user.role === 'guest') {
+			res.status(200).json((req as RequestJWTPayload).user);
+			return;
+		}
+		const mongoUser = await getUserById(user._id);
+		delete mongoUser.createdAt;
+		delete mongoUser.updatedAt;
+		res.status(200).json(mongoUser);
+	} catch (error) {
+		next(error);
+	}
 };
 
 export const generateUserTokens = async (req: Request, res: Response, next: NextFunction) => {
@@ -112,14 +122,13 @@ export const generateUserTokens = async (req: Request, res: Response, next: Next
 		const accessToken = generateAccessToken({
 			_id: user._id.toString(),
 			email: user.email,
-			role: 'user',
-			...(user.name && user.imageUrl ? { name: user.name, imageUrl: user.imageUrl } : {}),
+			role: user.role,
 		});
 
 		const refreshToken = generateRefreshToken({
 			_id: user._id.toString(),
 			email: user.email,
-			role: 'user',
+			role: user.role,
 		});
 
 		res
