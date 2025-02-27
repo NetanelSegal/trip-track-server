@@ -86,11 +86,7 @@ export const updateTrip = async (req: Request, res: Response, next: NextFunction
 
 export const addUserToTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const userData = await redisAddUserToTrip(
-			req.params.id,
-			(req as RequestJWTPayload).user._id,
-			(req as RequestJWTPayload).user.name
-		);
+		const userData = await redisAddUserToTrip(req.params.id, (req as RequestJWTPayload).user._id, req.body.name);
 		res.json(userData);
 	} catch (error) {
 		next(error);
