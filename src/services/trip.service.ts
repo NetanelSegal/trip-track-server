@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 
 export interface IRedisUserTripData {
+	imageUrl: string;
 	name: string;
 	score: number[];
 	finishedExperiences: boolean[];
@@ -26,7 +27,10 @@ interface TripService {
 	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
 
 	// redis related functions
-	redisAddUserToTrip: (tripId: string, userId: string, name: string) => Promise<IRedisUserTripData>;
+	redisAddUserToTrip: (
+		tripId: string,
+		data: { userId: string; name: string; imageUrl: string }
+	) => Promise<IRedisUserTripData>;
 	redisGetUserTripData: (tripId: string, userId: string) => Promise<IRedisUserTripData>;
 	redisRemoveUserFromTrip: (tripId: string, userId: string) => Promise<boolean>;
 	redisUpdateUserTripData: (
@@ -172,14 +176,15 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 };
 
 // redis
-export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (tripId, userId, name) => {
+export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (tripId, { userId, name, imageUrl }) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
 
 	const userTripData: IRedisUserTripData = {
+		name: name,
+		imageUrl,
 		score: [],
 		finishedExperiences: [],
-		name: name,
 	};
 
 	await RedisCache.setKeyWithValue({
