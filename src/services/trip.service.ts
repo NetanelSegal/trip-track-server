@@ -241,7 +241,7 @@ export const redisUpdateUserTripData: TripService['redisUpdateUserTripData'] = a
 export const redisGetUserTripData: TripService['redisGetUserTripData'] = async (tripId, userId) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const user = await RedisCache.getValueByKey<IRedisUserTripData>(userKey);
-	return user;
+	return { ...user, userId };
 };
 
 export const redisGetLeaderboard: TripService['redisGetLeaderboard'] = async (tripId) => {

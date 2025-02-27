@@ -9,6 +9,7 @@ import {
 	removeUserFromTrip,
 	updateGuestUserNameInTrip,
 	getUserTripData,
+	getAllUsersTripData,
 	updateTripStatus,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
@@ -28,6 +29,12 @@ router.get(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	authenticateToken({ allowGuest: true }),
 	getUserTripData
+);
+router.get(
+	'/:id/users',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	getAllUsersTripData
 );
 
 router.post(

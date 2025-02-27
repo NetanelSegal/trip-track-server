@@ -107,6 +107,20 @@ export const getUserTripData = async (req: Request, res: Response, next: NextFun
 	}
 };
 
+export const getAllUsersTripData = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const usersIds = await redisGetLeaderboard(req.params.id);
+
+		const usersData = await Promise.all(
+			usersIds.map(async (scoreToUserObject) => redisGetUserTripData(req.params.id, scoreToUserObject.value))
+		);
+
+		res.json(usersData);
+	} catch (error) {
+		next(error);
+	}
+};
+
 export const removeUserFromTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		await redisRemoveUserFromTrip(req.params.id, (req as RequestJWTPayload).user._id);
