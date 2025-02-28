@@ -107,8 +107,6 @@ export const validateToken = async (req: Request, res: Response, next: NextFunct
 			return;
 		}
 		const mongoUser = await getUserById(user._id);
-		delete mongoUser.createdAt;
-		delete mongoUser.updatedAt;
 		res.status(200).json(mongoUser);
 	} catch (error) {
 		next(error);
