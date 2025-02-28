@@ -86,11 +86,12 @@ export const updateTrip = async (req: Request, res: Response, next: NextFunction
 
 export const addUserToTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const userData = await redisAddUserToTrip(
-			req.params.id,
-			(req as RequestJWTPayload).user._id,
-			(req as RequestJWTPayload).user.name
-		);
+		const { name, imageUrl } = req.body;
+		const userData = await redisAddUserToTrip(req.params.id, {
+			userId: (req as RequestJWTPayload).user._id,
+			name,
+			imageUrl,
+		});
 		res.json(userData);
 	} catch (error) {
 		next(error);
@@ -101,6 +102,20 @@ export const getUserTripData = async (req: Request, res: Response, next: NextFun
 	try {
 		const userData = await redisGetUserTripData(req.params.id, (req as RequestJWTPayload).user._id);
 		res.json(userData);
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const getAllUsersTripData = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const usersIds = await redisGetLeaderboard(req.params.id);
+
+		const usersData = await Promise.all(
+			usersIds.map(async (scoreToUserObject) => redisGetUserTripData(req.params.id, scoreToUserObject.value))
+		);
+
+		res.json(usersData);
 	} catch (error) {
 		next(error);
 	}

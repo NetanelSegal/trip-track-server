@@ -9,6 +9,7 @@ import {
 	removeUserFromTrip,
 	updateGuestUserNameInTrip,
 	getUserTripData,
+	getAllUsersTripData,
 	updateTripStatus,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
@@ -16,7 +17,7 @@ import { Schemas } from 'trip-track-package';
 import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
-import { redisUserTripDataSchema } from '../validationSchemas/redisTripSchemas';
+import { redisAddUserToTripSchema } from '../validationSchemas/redisTripSchemas';
 import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 
 const router = Router();
@@ -29,10 +30,17 @@ router.get(
 	authenticateToken({ allowGuest: true }),
 	getUserTripData
 );
+router.get(
+	'/:id/users',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	getAllUsersTripData
+);
 
 router.post(
 	'/user-join/:id',
 	validateRequest(Schemas.mongoObjectId, 'params'),
+	validateRequest(redisAddUserToTripSchema),
 	authenticateToken({ allowGuest: true }),
 	addUserToTrip
 );
@@ -48,7 +56,7 @@ router.post(
 router.put(
 	'/:id/guest-name',
 	authenticateToken({ allowGuest: true }),
-	validateRequest(redisUserTripDataSchema),
+	validateRequest(redisAddUserToTripSchema),
 	updateGuestUserNameInTrip
 );
 router.put(

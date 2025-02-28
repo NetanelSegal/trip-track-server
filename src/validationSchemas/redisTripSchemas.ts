@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
-export const redisUserTripDataSchema = z.object({
-	name: z.string({ message: 'Name must be a string' }),
+export const redisAddUserToTripSchema = z.object({
+	name: z.string({
+		message: 'Name is required.',
+	}),
+	imageUrl: z.string({
+		message: 'Image URL is required.',
+	}),
 });
