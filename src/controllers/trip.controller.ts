@@ -14,6 +14,12 @@ import {
 	redisGetLeaderboard,
 	redisGetTripExperiences,
 } from '../services/trip.service';
+import {
+	addTripToUser,
+	removeTripFromUser,
+	deleteTripsRelated,
+	getTripsRelatedByUserId,
+} from '../services/user.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
 
@@ -92,7 +98,8 @@ export const addUserToTrip = async (req: Request, res: Response, next: NextFunct
 			name,
 			imageUrl,
 		});
-		res.json(userData);
+		const userTripsRelatedData = await addTripToUser((req as RequestJWTPayload).user._id, req.params.id);
+		res.json({ userData, userTripsRelatedData });
 	} catch (error) {
 		next(error);
 	}
@@ -148,6 +155,41 @@ export const updateTripStatus = async (req: Request, res: Response, next: NextFu
 
 		res.json({
 			message: `trip ${req.params.id} was ${isUpdated ? 'updated' : 'not updated'}`,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const getRelatedTripsByUserId = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const trips = await getTripsRelatedByUserId((req as RequestJWTPayload).user._id);
+		res.json({
+			message: `all trips related to user ${(req as RequestJWTPayload).user._id}`,
+			data: trips,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const removeTripRelated = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const trips = await removeTripFromUser((req as RequestJWTPayload).user._id, req.params.id);
+		res.json({
+			message: `trip ${req.params.id} was seccussfuly deleted from user ${(req as RequestJWTPayload).user._id}`,
+			data: trips,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const deleteAllTripsRelated = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		await deleteTripsRelated((req as RequestJWTPayload).user._id);
+		res.json({
+			message: `all trips was seccussfuly deleted from user ${(req as RequestJWTPayload).user._id}`,
 		});
 	} catch (error) {
 		next(error);
