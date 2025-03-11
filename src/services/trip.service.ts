@@ -94,7 +94,7 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 
 export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) => {
 	try {
-		const trip = await Trip.findById(tripId);
+		const trip = await Trip.findById(tripId).populate('creator').populate('guides');
 		if (!trip) {
 			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
 		}
@@ -169,6 +169,39 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 		}
 
 		return true;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoAddUserToTripParticipants = async (userId, tripId) => {
+	try {
+		const updatedTrip = await Trip.findByIdAndUpdate(
+			tripId,
+			{
+				$addToSet: { participants: { userId, score: 0 } },
+			},
+			{ new: true }
+		).populate('participants.userId');
+
+		if (!updatedTrip) {
+			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+		}
+		return updatedTrip;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoGetUserRelatedTrips = async (userId: string) => {
+	try {
+		const trips = await Trip.find({ participants: { $elemMatch: { userId } } }).populate('participants.userId');
+		if (!trips || trips.length === 0) {
+			throw new AppError('NotFound', 'Trips not found', 404, 'MongoDB');
+		}
+		return trips;
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
