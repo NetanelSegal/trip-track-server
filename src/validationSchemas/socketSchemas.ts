@@ -17,5 +17,6 @@ export const socketDataSchema = {
 			.string({ message: 'message must be a string' })
 			.max(300, 'Message must be at most 300 characters long')
 			.min(1, 'Message must be at least 1 character long'),
+		z.string({ message: 'userId must be a string' }),
 	],
 };
