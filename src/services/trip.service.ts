@@ -2,6 +2,8 @@ import { Types } from 'trip-track-package';
 import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
+import { Trip as TripType } from '../types/trip';
+import { UpdateResult } from 'mongoose';
 
 export interface IRedisUserTripData {
 	imageUrl: string;
@@ -15,7 +17,7 @@ interface IRedisTripExperience {
 	active: boolean;
 }
 
-type TripT = Types['Trip']['Model'];
+type TripT = TripType;
 
 interface TripService {
 	// mongo related functions
@@ -25,6 +27,11 @@ interface TripService {
 	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
 	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
 	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
+	mongoUpdateTripReward: (
+		userId: string,
+		tripId: string,
+		reward: TripType['reward']
+	) => Promise<{ deletedImage: string | null }>;
 
 	// redis related functions
 	redisAddUserToTrip: (
@@ -160,6 +167,30 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 		}
 
 		return true;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async (userId, tripId, { title, image }) => {
+	try {
+		const trip = await Trip.findOne({ _id: tripId, creator: userId });
+		if (!trip) {
+			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+		}
+
+		let lastRewardImage: string | null = null;
+		const updateFields = { 'reward.title': title };
+
+		if (image) {
+			updateFields['reward.image'] = image;
+			lastRewardImage = trip.reward?.image;
+		}
+
+		await trip.updateOne({ $set: updateFields });
+
+		return { deletedImage: lastRewardImage };
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
