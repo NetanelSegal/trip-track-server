@@ -13,6 +13,7 @@ import {
 	redisUpdateUserTripData,
 	redisGetLeaderboard,
 	redisGetTripExperiences,
+	mongoUpdateTripReward,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -149,6 +150,38 @@ export const updateTripStatus = async (req: Request, res: Response, next: NextFu
 		res.json({
 			message: `trip ${req.params.id} was ${isUpdated ? 'updated' : 'not updated'}`,
 		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const updateTripReward = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const {
+			file,
+			body: { title },
+		} = req;
+
+		let image: string | undefined;
+
+		if (file) {
+			const s3Response = await s3Service.uploadFile(file.path, file.filename, file.mimetype);
+			fs.unlinkSync(file.path);
+			image = s3Response.Location;
+		}
+
+		const { deletedImage } = await mongoUpdateTripReward((req as RequestJWTPayload).user._id, req.params.id, {
+			title,
+			image,
+		});
+
+		if (deletedImage) {
+			const url = new URL(deletedImage);
+			const fileName = decodeURIComponent(url.pathname.split('/')[1]);
+			await s3Service.deleteFile(fileName);
+		}
+
+		res.json({ message: 'Trip reward was updated' });
 	} catch (error) {
 		next(error);
 	}

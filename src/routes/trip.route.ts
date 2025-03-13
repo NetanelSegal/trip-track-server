@@ -11,6 +11,7 @@ import {
 	getUserTripData,
 	getAllUsersTripData,
 	updateTripStatus,
+	updateTripReward,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -18,7 +19,7 @@ import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
 import { redisAddUserToTripSchema } from '../validationSchemas/redisTripSchemas';
-import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
+import { tripUpdateStatusSchema, updateRewardSchema } from '../validationSchemas/tripSchemas';
 
 const router = Router();
 
@@ -65,6 +66,15 @@ router.put(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	validateRequest(Schemas.trip.createTripSchema),
 	updateTrip
+);
+router.put(
+	'/reward/:id',
+	authenticateToken(),
+	uploadMiddleware.single('rewardImage'),
+	parseFormData,
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	validateRequest(updateRewardSchema),
+	updateTripReward
 );
 
 router.delete(
