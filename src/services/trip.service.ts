@@ -70,19 +70,10 @@ export const mongoCreateTrip: TripService['mongoCreateTrip'] = async (data) => {
 
 export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tripId, data) => {
 	try {
-		const trip = await Trip.findById(tripId);
+		const trip = await Trip.findOneAndUpdate({ _id: tripId, creator: userId }, data, { new: true });
+
 		if (!trip) {
 			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-		}
-
-		if (trip.creator.toString() !== userId) {
-			throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
-		}
-
-		const updateResult = await trip.updateOne(data);
-
-		if (updateResult.modifiedCount === 0) {
-			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
 		}
 
 		return trip;
