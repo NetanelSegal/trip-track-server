@@ -181,7 +181,9 @@ export const updateTripReward = async (req: Request, res: Response, next: NextFu
 			await s3Service.deleteFile(fileName);
 		}
 
-		res.json({ message: 'Trip reward was updated' });
+		const newTrip = await mongoGetTripById(req.params.id);
+
+		res.json(newTrip);
 	} catch (error) {
 		next(error);
 	}
