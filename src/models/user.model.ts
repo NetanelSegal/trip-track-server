@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema<Types['User']['Model']>(
 		imageUrl: { type: String, required: false },
 		role: { type: String, enum: ['user'], default: 'user' },
 	},
-	{ timestamps: true }
+	{
+		versionKey: false,
+		timestamps: true,
+	}
 );
 
 export const UserModel = mongoose.model<Types['User']['Model']>('User', userSchema);
