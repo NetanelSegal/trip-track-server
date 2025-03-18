@@ -11,6 +11,8 @@ import {
 	getUserTripData,
 	getAllUsersTripData,
 	updateTripStatus,
+	addUserToTripParticipants,
+	getTripsUserIsInParticipants,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -23,6 +25,8 @@ import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 const router = Router();
 
 router.get('/getAll', authenticateToken(), getTrips);
+router.get('/user-in-participants', authenticateToken(), getTripsUserIsInParticipants);
+
 router.get('/:id', validateRequest(Schemas.mongoObjectId, 'params'), getTripById);
 router.get(
 	'/:id/user',
@@ -82,6 +86,13 @@ router.put(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	validateRequest(tripUpdateStatusSchema, 'body'),
 	updateTripStatus
+);
+
+router.put(
+	'/user-to-participants/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken(),
+	addUserToTripParticipants
 );
 
 export { router as tripRouter };
