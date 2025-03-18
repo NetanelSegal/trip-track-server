@@ -2,6 +2,8 @@ import { Types } from 'trip-track-package';
 import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
+import { Trip as TripType } from '../types/trip';
+import { UpdateResult } from 'mongoose';
 
 export interface IRedisUserTripData {
 	imageUrl: string;
@@ -15,7 +17,7 @@ interface IRedisTripExperience {
 	active: boolean;
 }
 
-type TripT = Types['Trip']['Model'];
+type TripT = TripType;
 
 interface TripService {
 	// mongo related functions
@@ -27,6 +29,11 @@ interface TripService {
 	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
 	mongoAddUserToTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
 	mongoGetTripsUserIsInParticipants: (userId: string) => Promise<TripT[]>;
+	mongoUpdateTripReward: (
+		userId: string,
+		tripId: string,
+		reward: TripType['reward']
+	) => Promise<{ deletedImage: string | null }>;
 
 	// redis related functions
 	redisAddUserToTrip: (
@@ -72,19 +79,10 @@ export const mongoCreateTrip: TripService['mongoCreateTrip'] = async (data) => {
 
 export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tripId, data) => {
 	try {
-		const trip = await Trip.findById(tripId);
+		const trip = await Trip.findOneAndUpdate({ _id: tripId, creator: userId }, data, { new: true });
+
 		if (!trip) {
 			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-		}
-
-		if (trip.creator.toString() !== userId) {
-			throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
-		}
-
-		const updateResult = await trip.updateOne(data);
-
-		if (updateResult.modifiedCount === 0) {
-			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
 		}
 
 		return trip;
@@ -212,6 +210,30 @@ export const mongoGetTripsUserIsInParticipants: TripService['mongoGetTripsUserIs
 		const trips = await Trip.find({ participants: { $elemMatch: { userId } } }).populate('participants.userId');
 
 		return trips;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async (userId, tripId, { title, image }) => {
+	try {
+		const trip = await Trip.findOne({ _id: tripId, creator: userId });
+		if (!trip) {
+			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+		}
+
+		let lastRewardImage: string | null = null;
+		const updateFields = { 'reward.title': title };
+
+		if (image) {
+			updateFields['reward.image'] = image;
+			lastRewardImage = trip.reward?.image;
+		}
+
+		await trip.updateOne({ $set: updateFields });
+
+		return { deletedImage: lastRewardImage };
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');

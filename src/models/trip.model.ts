@@ -1,5 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Types } from 'mongoose';
 import { ExperienceType, Types as TTTypes, TripStatusArray } from 'trip-track-package';
+import { Trip as TripType } from '../types/trip';
 
 const StopSchema = new Schema<TTTypes['Trip']['Stop']['Model']>(
 	{
@@ -22,7 +23,7 @@ const StopSchema = new Schema<TTTypes['Trip']['Stop']['Model']>(
 	}
 );
 
-const RewardSchema = new Schema<TTTypes['Trip']['Reward']['Model']>(
+const RewardSchema = new Schema<TripType['reward']>(
 	{
 		image: String,
 		title: { type: String, required: true },
@@ -32,7 +33,7 @@ const RewardSchema = new Schema<TTTypes['Trip']['Reward']['Model']>(
 	}
 );
 
-const TripSchema = new Schema<TTTypes['Trip']['Model']>({
+const TripSchema = new Schema<TripType>({
 	creator: { type: Schema.Types.ObjectId, ref: 'User' },
 	guides: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	name: String,
@@ -51,4 +52,4 @@ const TripSchema = new Schema<TTTypes['Trip']['Model']>({
 	],
 });
 
-export const Trip = mongoose.model<TTTypes['Trip']['Model']>('Trip', TripSchema);
+export const Trip = mongoose.model<TripType>('Trip', TripSchema);
