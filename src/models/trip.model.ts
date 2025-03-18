@@ -43,10 +43,10 @@ const TripSchema = new Schema<TTTypes['Trip']['Model']>({
 	participants: [
 		new Schema(
 			{
-				userId: { type: Schema.Types.ObjectId, ref: 'User' },
+				userId: { type: Schema.Types.ObjectId, ref: 'User', unique: true },
 				score: { type: Number, default: 0 },
 			},
-			{ _id: false }
+			{ _id: false, versionKey: false }
 		),
 	],
 });

@@ -14,7 +14,7 @@ import {
 	redisGetLeaderboard,
 	redisGetTripExperiences,
 	mongoAddUserToTripParticipants,
-	mongoGetUserRelatedTrips,
+	mongoGetTripsUserIsInParticipants,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -166,15 +166,13 @@ export const addUserToTripParticipants = async (req: Request, res: Response, nex
 	}
 };
 
-export const getUserRelatedTrips = async (req: Request, res: Response, next: NextFunction) => {
-	console.log('kkkk');
-
+export const getTripsUserIsInParticipants = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		if (!mongoose.isValidObjectId((req as RequestJWTPayload).user._id)) {
 			res.status(400).json({ message: 'Invalid user id' });
 		}
 
-		const trips = await mongoGetUserRelatedTrips((req as RequestJWTPayload).user._id);
+		const trips = await mongoGetTripsUserIsInParticipants((req as RequestJWTPayload).user._id);
 		res.json(trips);
 	} catch (error) {
 		next(error);
