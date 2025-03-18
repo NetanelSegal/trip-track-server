@@ -34,13 +34,22 @@ const RewardSchema = new Schema<TripType['reward']>(
 );
 
 const TripSchema = new Schema<TripType>({
-	creator: Types.ObjectId,
-	guides: [Types.ObjectId],
+	creator: { type: Schema.Types.ObjectId, ref: 'User' },
+	guides: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	name: String,
 	description: String,
 	stops: [StopSchema],
 	reward: RewardSchema,
 	status: { type: String, enum: TripStatusArray, default: 'created' },
+	participants: [
+		new Schema(
+			{
+				userId: { type: Schema.Types.ObjectId, ref: 'User', unique: true },
+				score: { type: Number, default: 0 },
+			},
+			{ _id: false, versionKey: false }
+		),
+	],
 });
 
 export const Trip = mongoose.model<TripType>('Trip', TripSchema);

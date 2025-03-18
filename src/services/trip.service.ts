@@ -27,6 +27,8 @@ interface TripService {
 	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
 	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
 	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
+	mongoAddUserToTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
+	mongoGetTripsUserIsInParticipants: (userId: string) => Promise<TripT[]>;
 	mongoUpdateTripReward: (
 		userId: string,
 		tripId: string,
@@ -92,7 +94,7 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 
 export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) => {
 	try {
-		const trip = await Trip.findById(tripId);
+		const trip = await Trip.findById(tripId).populate('creator').populate('guides');
 		if (!trip) {
 			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
 		}
@@ -167,6 +169,47 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 		}
 
 		return true;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoAddUserToTripParticipants: TripService['mongoAddUserToTripParticipants'] = async (userId, tripId) => {
+	try {
+		const trip = await Trip.findById(tripId);
+		if (!trip) {
+			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+		}
+
+		const isAlreadyParticipant = trip.participants.some((participant) => participant.userId.toString() === userId);
+
+		if (isAlreadyParticipant) {
+			throw new AppError('BadRequest', 'User is already a participant in this trip', 400, 'MongoDB');
+		}
+
+		const updatedTrip = await Trip.findByIdAndUpdate(
+			tripId,
+			{
+				$addToSet: { participants: { userId, score: 0 } },
+			},
+			{ new: true }
+		).populate('participants.userId');
+
+		return true;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoGetTripsUserIsInParticipants: TripService['mongoGetTripsUserIsInParticipants'] = async (
+	userId: string
+) => {
+	try {
+		const trips = await Trip.find({ participants: { $elemMatch: { userId } } }).populate('participants.userId');
+
+		return trips;
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
