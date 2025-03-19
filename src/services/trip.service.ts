@@ -1,9 +1,7 @@
-import { Types } from 'trip-track-package';
 import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
-import { UpdateResult } from 'mongoose';
 
 export interface IRedisUserTripData {
 	imageUrl: string;
