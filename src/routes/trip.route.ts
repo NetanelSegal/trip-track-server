@@ -21,7 +21,7 @@ import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
 import { redisAddUserToTripSchema } from '../validationSchemas/redisTripSchemas';
-import { tripUpdateStatusSchema, updateRewardSchema } from '../validationSchemas/tripSchemas';
+import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 
 const router = Router();
 
@@ -76,7 +76,7 @@ router.put(
 	uploadMiddleware.single('rewardImage'),
 	parseFormData,
 	validateRequest(Schemas.mongoObjectId, 'params'),
-	validateRequest(updateRewardSchema),
+	validateRequest(Schemas.trip.reward),
 	updateTripReward
 );
 router.put(
