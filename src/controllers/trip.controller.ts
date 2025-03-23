@@ -16,6 +16,7 @@ import {
 	mongoAddUserToTripParticipants,
 	mongoGetTripsUserIsInParticipants,
 	mongoUpdateTripReward,
+	redisInitializeTripExperiences,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -43,9 +44,20 @@ export const createTrip = async (req: Request, res: Response, next: NextFunction
 
 export const startTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const isUpdated = await mongoUpdateTripStatus((req as RequestJWTPayload).user._id, req.params.id, 'started');
+		const tripId = req.params.id;
+		const updatedTrip = await mongoUpdateTripStatus((req as RequestJWTPayload).user._id, tripId, 'started');
+		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience ? count + 1 : count), 0);
+		const redisInitialTripResult = await redisInitializeTripExperiences(tripId, experienceCount, null);
 
-		res.json({ trip: req.params.id, user: (req as RequestJWTPayload).user._id, isUpdated });
+		// TODO: think if we really want to add all the users to the trip here
+
+		// const promises = updatedTrip.participants.map(({ userId: { name, imageUrl, _id } }) =>
+		// 	redisAddUserToTrip(tripId, { userId: _id.toString(), imageUrl, name })
+		// );
+
+		// await Promise.all(promises);
+
+		res.json({ updatedTrip });
 	} catch (error) {
 		next(error);
 	}

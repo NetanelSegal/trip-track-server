@@ -2,7 +2,12 @@ import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
-import { TripStatusArray } from 'trip-track-package';
+import { TripStatusArray, Types } from 'trip-track-package';
+
+interface Participant {
+	userId: Types['User']['Model'];
+	score: number;
+}
 
 export interface IRedisUserTripData {
 	imageUrl: string;
@@ -25,7 +30,11 @@ interface TripService {
 	mongoGetTripById: (id: string) => Promise<TripT>;
 	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
 	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
-	mongoUpdateTripStatus: (userId: string, tripId: string, status: (typeof TripStatusArray)[number]) => Promise<TripT>;
+	mongoUpdateTripStatus: (
+		userId: string,
+		tripId: string,
+		status: (typeof TripStatusArray)[number]
+	) => Promise<Omit<TripT, 'participants'> & { participants: Participant[] }>;
 	mongoAddUserToTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
 	mongoGetTripsUserIsInParticipants: (userId: string) => Promise<TripT[]>;
 	mongoUpdateTripReward: (
@@ -154,7 +163,7 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 			},
 			{ status },
 			{ new: true }
-		);
+		).populate<{ participants: Participant[] }>('participants.userId');
 
 		if (!updateResult) {
 			const trip = await Trip.findById(tripId);
