@@ -2,6 +2,7 @@ import { Trip } from '../models/trip.model';
 import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
+import { TripStatusArray } from 'trip-track-package';
 
 export interface IRedisUserTripData {
 	imageUrl: string;
@@ -24,7 +25,7 @@ interface TripService {
 	mongoGetTripById: (id: string) => Promise<TripT>;
 	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
 	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
-	mongoUpdateTripStatus: (userId: string, tripId: string, status: string) => Promise<boolean>;
+	mongoUpdateTripStatus: (userId: string, tripId: string, status: (typeof TripStatusArray)[number]) => Promise<TripT>;
 	mongoAddUserToTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
 	mongoGetTripsUserIsInParticipants: (userId: string) => Promise<TripT[]>;
 	mongoUpdateTripReward: (
@@ -145,28 +146,34 @@ export const mongoDeleteTrip: TripService['mongoDeleteTrip'] = async (userId, tr
 
 export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async (userId, tripId, status) => {
 	try {
-		const trip = await Trip.findById(tripId);
-		if (!trip) {
-			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-		}
+		const updateResult = await Trip.findOneAndUpdate(
+			{
+				_id: tripId,
+				creator: userId,
+				status: { $ne: status },
+			},
+			{ status },
+			{ new: true }
+		);
 
-		if (trip.creator.toString() !== userId) {
-			throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
-		}
+		if (!updateResult) {
+			const trip = await Trip.findById(tripId);
+			if (!trip) {
+				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+			}
 
-		if (status === trip.status) {
-			throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
-		}
+			if (trip.creator.toString() !== userId) {
+				throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
+			}
 
-		const updateResult = await trip.updateOne({
-			status,
-		});
+			if (trip.status === status) {
+				throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
+			}
 
-		if (updateResult.modifiedCount === 0) {
 			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
 		}
 
-		return true;
+		return updateResult;
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');

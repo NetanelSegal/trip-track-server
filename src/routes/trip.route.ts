@@ -6,6 +6,7 @@ import {
 	getAllUsersTripData,
 	getTripsUserIsInParticipants,
 	createTrip,
+	startTrip,
 	updateTrip,
 	updateGuestUserNameInTrip,
 	updateTripStatus,
@@ -56,6 +57,7 @@ router.post(
 	validateRequest(Schemas.trip.createTripSchema),
 	createTrip
 );
+router.post('/start/:id', authenticateToken(), validateRequest(Schemas.mongoObjectId, 'params'), startTrip);
 
 router.put(
 	'/:id/guest-name',

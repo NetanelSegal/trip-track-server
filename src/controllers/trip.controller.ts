@@ -41,6 +41,16 @@ export const createTrip = async (req: Request, res: Response, next: NextFunction
 	}
 };
 
+export const startTrip = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const isUpdated = await mongoUpdateTripStatus((req as RequestJWTPayload).user._id, req.params.id, 'started');
+
+		res.json({ trip: req.params.id, user: (req as RequestJWTPayload).user._id, isUpdated });
+	} catch (error) {
+		next(error);
+	}
+};
+
 export const deleteTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		await mongoDeleteTrip((req as RequestJWTPayload).user._id, req.params.id);
