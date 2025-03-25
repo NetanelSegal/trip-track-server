@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
 import { TripStatusArray, Types } from 'trip-track-package';
+import { PopulatedDoc } from 'mongoose';
 
 interface Participant {
 	userId: Types['User']['Model'];
@@ -21,6 +22,8 @@ interface IRedisTripExperience {
 	active: boolean; // is experience active and users can enter the experience
 }
 
+type PopulatedTripWithParticipants = Omit<TripT, 'participants'> & { participants: Participant[] };
+
 type TripT = TripType;
 
 interface TripService {
@@ -34,7 +37,7 @@ interface TripService {
 		userId: string,
 		tripId: string,
 		status: (typeof TripStatusArray)[number]
-	) => Promise<Omit<TripT, 'participants'> & { participants: Participant[] }>;
+	) => Promise<PopulatedTripWithParticipants>;
 	mongoAddUserToTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
 	mongoGetTripsUserIsInParticipants: (userId: string) => Promise<TripT[]>;
 	mongoUpdateTripReward: (
@@ -75,7 +78,7 @@ interface TripService {
 		tripId: string,
 		userId: string,
 		participants: { userId: string; score: number }[]
-	) => Promise<boolean>;
+	) => Promise<PopulatedTripWithParticipants>;
 }
 
 // mongo
@@ -392,8 +395,12 @@ export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (
 			{
 				_id: tripId,
 				creator: userId,
+				status: { $ne: 'completed' },
 			},
-			{ status: 'completed', participants },
+			{
+				status: 'completed',
+				participants,
+			},
 			{ new: true }
 		).populate<{ participants: Participant[] }>('participants.userId');
 
@@ -407,14 +414,14 @@ export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (
 				throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
 			}
 
-			if (trip.status === status) {
+			if (trip.status === 'completed') {
 				throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
 			}
 
 			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
 		}
 
-		return true;
+		return updateResult;
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
