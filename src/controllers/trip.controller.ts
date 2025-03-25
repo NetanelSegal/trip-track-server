@@ -16,6 +16,9 @@ import {
 	mongoAddUserToTripParticipants,
 	mongoGetTripsUserIsInParticipants,
 	mongoUpdateTripReward,
+	redisInitializeTripExperiences,
+	redisDeleteTrip,
+	redisAndMongoEndTrip,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -36,6 +39,47 @@ export const createTrip = async (req: Request, res: Response, next: NextFunction
 		const trip = await mongoCreateTrip(tripData);
 
 		res.json(trip);
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const startTrip = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const tripId = req.params.id;
+
+		const updatedTrip = await mongoUpdateTripStatus((req as RequestJWTPayload).user._id, tripId, 'started');
+
+		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience ? count + 1 : count), 0);
+
+		await redisInitializeTripExperiences(tripId, experienceCount);
+
+		res.json({ updatedTrip });
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const endTrip = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const tripId = req.params.id;
+		const userId = (req as RequestJWTPayload).user._id;
+
+		const usersIds = await redisGetLeaderboard(tripId);
+
+		const updatedTrip = await redisAndMongoEndTrip(
+			tripId,
+			userId,
+			usersIds.map(({ value, score }) => ({ userId: value, score }))
+		);
+
+		const promises = usersIds.map(({ value }) => redisRemoveUserFromTrip(tripId, value));
+
+		await Promise.all(promises);
+
+		await redisDeleteTrip(tripId);
+
+		res.json({ updatedTrip });
 	} catch (error) {
 		next(error);
 	}
