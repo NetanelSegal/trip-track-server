@@ -12,13 +12,13 @@ interface Participant {
 export interface IRedisUserTripData {
 	imageUrl: string;
 	name: string;
-	score: number[];
+	score: number[]; // score for each experience in the trip
 	finishedExperiences: boolean[];
 }
 
 interface IRedisTripExperience {
-	winners: [string, string, string];
-	active: boolean;
+	winners: [string, string, string]; // array of user ids for 1st 2nd and 3rd place
+	active: boolean; // is experience active and users can enter the experience
 }
 
 type TripT = TripType;
@@ -26,7 +26,7 @@ type TripT = TripType;
 interface TripService {
 	// mongo related functions
 	mongoCreateTrip: (data: TripT) => Promise<TripT>;
-	mongoUpdateTrip: (userId: string, tripId: string, data: TripT) => Promise<TripT>;
+	mongoUpdateTrip: (userId: string, tripId: string, data: Types['Trip']['Update']) => Promise<TripT>;
 	mongoGetTripById: (id: string) => Promise<TripT>;
 	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
 	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
@@ -61,11 +61,7 @@ interface TripService {
 			value: string;
 		}[]
 	>;
-	redisInitializeTripExperiences: (
-		tripId: string,
-		countOfExperiences: number,
-		winnersInitialValue: IRedisTripExperience['winners'][0]
-	) => Promise<void>;
+	redisInitializeTripExperiences: (tripId: string, countOfExperiences: number) => Promise<void>;
 	redisGetTripExperiences: (tripId: string) => Promise<IRedisTripExperience[]>;
 	redisUpdateTripExperiences: (
 		tripId: string,
@@ -73,6 +69,13 @@ interface TripService {
 		data: IRedisTripExperience
 	) => Promise<IRedisTripExperience>;
 	redisDeleteTrip: (tripId: string) => Promise<void>;
+
+	// end trip in redis and mongo
+	redisAndMongoEndTrip: (
+		tripId: string,
+		userId: string,
+		participants: { userId: string; score: number }[]
+	) => Promise<boolean>;
 }
 
 // mongo
@@ -106,7 +109,7 @@ export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) 
 		if (!trip) {
 			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
 		}
-		return trip;
+		return trip.toJSON();
 	} catch (error: any) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
@@ -331,12 +334,11 @@ export const redisGetLeaderboard: TripService['redisGetLeaderboard'] = async (tr
 
 export const redisInitializeTripExperiences: TripService['redisInitializeTripExperiences'] = async (
 	tripId,
-	countOfExperiences,
-	winnersInitialValue
+	countOfExperiences
 ) => {
 	const tripExperiencesKey = `trip_experiences:${tripId}`;
 	const tripExperiences: IRedisTripExperience[] = Array.from({ length: countOfExperiences }, (_) => ({
-		winners: [winnersInitialValue, winnersInitialValue, winnersInitialValue],
+		winners: [null, null, null],
 		active: false,
 	}));
 	await RedisCache.setKeyWithValue({
@@ -381,4 +383,40 @@ export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) =>
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
 	await RedisCache.deleteKey(tripExperiencesKey);
 	await RedisCache.deleteKey(leaderboardKey);
+};
+
+// redis and mongo
+export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (tripId, userId, participants) => {
+	try {
+		const updateResult = await Trip.findOneAndUpdate(
+			{
+				_id: tripId,
+				creator: userId,
+			},
+			{ status: 'completed', participants },
+			{ new: true }
+		).populate<{ participants: Participant[] }>('participants.userId');
+
+		if (!updateResult) {
+			const trip = await Trip.findById(tripId);
+			if (!trip) {
+				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+			}
+
+			if (trip.creator.toString() !== userId) {
+				throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
+			}
+
+			if (trip.status === status) {
+				throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
+			}
+
+			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
+		}
+
+		return true;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
 };

@@ -15,6 +15,7 @@ import {
 	addUserToTripParticipants,
 	removeUserFromTrip,
 	deleteTrip,
+	endTrip,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -58,6 +59,7 @@ router.post(
 	createTrip
 );
 router.post('/start/:id', authenticateToken(), validateRequest(Schemas.mongoObjectId, 'params'), startTrip);
+router.post('/end/:id', authenticateToken(), validateRequest(Schemas.mongoObjectId, 'params'), endTrip);
 
 router.put(
 	'/:id/guest-name',
@@ -69,7 +71,7 @@ router.put(
 	'/:id',
 	authenticateToken(),
 	validateRequest(Schemas.mongoObjectId, 'params'),
-	validateRequest(Schemas.trip.createTripSchema),
+	validateRequest(Schemas.trip.updateTripSchema),
 	updateTrip
 );
 router.put(
