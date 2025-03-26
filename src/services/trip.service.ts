@@ -3,7 +3,6 @@ import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
 import { TripStatusArray, Types } from 'trip-track-package';
-import { PopulatedDoc } from 'mongoose';
 
 interface Participant {
 	userId: Types['User']['Model'];
