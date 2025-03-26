@@ -148,10 +148,6 @@ export const getAllUsersTripData = async (req: Request, res: Response, next: Nex
 
 export const getTripsUserIsInParticipants = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		if (!mongoose.isValidObjectId((req as RequestJWTPayload).user._id)) {
-			res.status(400).json({ message: 'Invalid user id' });
-		}
-
 		const trips = await mongoGetTripsUserIsInParticipants((req as RequestJWTPayload).user._id);
 		res.json(trips);
 	} catch (error) {

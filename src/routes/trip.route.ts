@@ -28,8 +28,8 @@ import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
 const router = Router();
 
 router.get('/getAll', authenticateToken(), getTrips);
-router.get('/:id', validateRequest(Schemas.mongoObjectId, 'params'), getTripById);
 router.get('/user-in-participants', authenticateToken(), getTripsUserIsInParticipants);
+router.get('/:id', validateRequest(Schemas.mongoObjectId, 'params'), getTripById);
 router.get(
 	'/:id/user',
 	validateRequest(Schemas.mongoObjectId, 'params'),
