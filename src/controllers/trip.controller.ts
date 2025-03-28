@@ -98,7 +98,7 @@ export const getTripById = async (req: Request, res: Response, next: NextFunctio
 	try {
 		const tripMongoData = await mongoGetTripById(req.params.id);
 
-		if (tripMongoData.status === 'created') {
+		if (tripMongoData.status !== 'started') {
 			res.json(tripMongoData);
 			return;
 		}
