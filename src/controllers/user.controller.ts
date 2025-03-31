@@ -42,3 +42,26 @@ export const getRandomUserName = async (req: Request, res: Response) => {
 		throw new AppError('AppError', error.message, 500, 'RandomName');
 	}
 };
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		res.clearCookie('accessToken', {
+			httpOnly: true,
+			secure: process.env.ENV === 'production',
+			sameSite: 'strict',
+		});
+		res.clearCookie('refreshToken', {
+			httpOnly: true,
+			secure: process.env.ENV === 'production',
+			sameSite: 'strict',
+		});
+		res.clearCookie('guestToken', {
+			httpOnly: true,
+			secure: process.env.ENV === 'production',
+			sameSite: 'strict',
+		});
+		res.status(200).json({ message: 'Logged out successfully' });
+	} catch (error) {
+		next(error);
+	}
+};
