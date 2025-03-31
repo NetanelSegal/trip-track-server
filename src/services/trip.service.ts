@@ -196,10 +196,6 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 
 export const mongoAddUserToTripParticipants: TripService['mongoAddUserToTripParticipants'] = async (userId, tripId) => {
 	try {
-		const tripExists = await Trip.exists({ _id: tripId });
-		if (!tripExists) {
-			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-		}
 		const result = await Trip.updateOne(
 			{
 				_id: tripId,
@@ -211,6 +207,10 @@ export const mongoAddUserToTripParticipants: TripService['mongoAddUserToTripPart
 		);
 
 		if (result.modifiedCount === 0) {
+			const tripExists = await Trip.exists({ _id: tripId });
+			if (!tripExists) {
+				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+			}
 			throw new AppError('BadRequest', 'User is already a participant in this trip', 400, 'MongoDB');
 		}
 
