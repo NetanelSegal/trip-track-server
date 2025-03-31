@@ -133,13 +133,27 @@ export const mongoGetTrips: TripService['mongoGetTrips'] = async (userId, page =
 
 export const mongoDeleteTrip: TripService['mongoDeleteTrip'] = async (userId, tripId) => {
 	try {
-		const trip = await Trip.findOneAndDelete({
+		const tripDeleted = await Trip.findOneAndDelete({
 			_id: tripId,
 			creator: userId,
 			status: { $in: ['created', 'cancelled'] },
 		});
-		if (!trip) {
-			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
+
+		if (!tripDeleted) {
+			const trip = await Trip.findById(tripId);
+			if (!trip) {
+				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+			}
+
+			if (trip.creator.toString() !== userId) {
+				throw new AppError('Unauthorized', 'You are not authorized to delete this trip', 403, 'MongoDB');
+			}
+
+			if (trip.status !== 'created' && trip.status !== 'cancelled') {
+				throw new AppError('Forbidden', 'You can only delete created or cancelled trips', 403, 'MongoDB');
+			}
+
+			throw new AppError('InternalError', 'Error deleting trip', 500, 'MongoDB');
 		}
 	} catch (error: any) {
 		if (error instanceof AppError) throw error;
