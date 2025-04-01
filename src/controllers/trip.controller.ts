@@ -14,6 +14,7 @@ import {
 	redisGetLeaderboard,
 	redisGetTripExperiences,
 	mongoAddUserToTripParticipants,
+	mongoRemoveUserFromTripParticipants,
 	mongoGetTripsUserIsInParticipants,
 	mongoUpdateTripReward,
 	redisInitializeTripExperiences,
@@ -190,6 +191,15 @@ export const addUserToTripParticipants = async (req: Request, res: Response, nex
 	try {
 		const isAdded = await mongoAddUserToTripParticipants((req as RequestJWTPayload).user._id, req.params.id);
 		res.json({ message: `user ${(req as RequestJWTPayload).user._id} was ${isAdded ? 'added' : 'not added'}` });
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const removeUserFromTripParticipants = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const isRemoved = await mongoRemoveUserFromTripParticipants((req as RequestJWTPayload).user._id, req.params.id);
+		res.json({ message: `user ${(req as RequestJWTPayload).user._id} was ${isRemoved ? 'removed' : 'not removed'}` });
 	} catch (error) {
 		next(error);
 	}

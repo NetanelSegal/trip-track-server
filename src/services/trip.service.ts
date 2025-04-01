@@ -38,6 +38,7 @@ interface TripService {
 		status: (typeof TripStatusArray)[number]
 	) => Promise<PopulatedTripWithParticipants>;
 	mongoAddUserToTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
+	mongoRemoveUserFromTripParticipants: (userId: string, tripId: string) => Promise<boolean>;
 	mongoGetTripsUserIsInParticipants: (userId: string) => Promise<TripT[]>;
 	mongoUpdateTripReward: (
 		userId: string,
@@ -215,6 +216,37 @@ export const mongoAddUserToTripParticipants: TripService['mongoAddUserToTripPart
 				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
 			}
 			throw new AppError('BadRequest', 'User is already a participant in this trip', 400, 'MongoDB');
+		}
+
+		return true;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoRemoveUserFromTripParticipants: TripService['mongoRemoveUserFromTripParticipants'] = async (
+	userId,
+	tripId
+) => {
+	try {
+		const result = await Trip.findOneAndUpdate(
+			{
+				_id: tripId,
+				'participants.userId': userId,
+			},
+			{
+				$pull: { participants: { userId } },
+			},
+			{ new: true }
+		);
+
+		if (!result) {
+			const tripExists = await Trip.exists({ _id: tripId });
+			if (!tripExists) {
+				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+			}
+			throw new AppError('NotFound', 'User is not a participant in this trip', 400, 'MongoDB');
 		}
 
 		return true;

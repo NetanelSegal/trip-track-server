@@ -13,6 +13,7 @@ import {
 	updateTripReward,
 	addUserToTrip,
 	addUserToTripParticipants,
+	removeUserFromTripParticipants,
 	removeUserFromTrip,
 	deleteTrip,
 	endTrip,
@@ -95,6 +96,13 @@ router.put(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	authenticateToken(),
 	addUserToTripParticipants
+);
+
+router.put(
+	'/remove-user-from-participants/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken(),
+	removeUserFromTripParticipants
 );
 
 router.delete(
