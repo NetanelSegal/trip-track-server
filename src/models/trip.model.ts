@@ -44,7 +44,7 @@ const TripSchema = new Schema<TripType>({
 	participants: [
 		new Schema(
 			{
-				userId: { type: Schema.Types.ObjectId, ref: 'User', unique: true },
+				userId: { type: Schema.Types.ObjectId, ref: 'User' },
 				score: { type: Number, default: 0 },
 			},
 			{ _id: false, versionKey: false }
