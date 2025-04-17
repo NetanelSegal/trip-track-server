@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
 import { TripStatusArray, Types } from 'trip-track-package';
+import { handleWhyTripNotFoundMongo } from '../utils/functions.utils';
 
 interface Participant {
 	userId: Types['User']['Model'];
@@ -93,13 +94,22 @@ export const mongoCreateTrip: TripService['mongoCreateTrip'] = async (data) => {
 
 export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tripId, data) => {
 	try {
-		const trip = await Trip.findOneAndUpdate({ _id: tripId, creator: userId }, data, { new: true });
+		const updatedTrip = await Trip.findOneAndUpdate(
+			{ _id: tripId, creator: userId, status: { $nin: ['started', 'completed'] } },
+			data,
+			{ new: true }
+		);
 
-		if (!trip) {
-			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+		if (!updatedTrip) {
+			await handleWhyTripNotFoundMongo({
+				tripId,
+				userId,
+				action: 'update',
+				nutAllowedStatuses: ['started', 'completed'],
+			});
 		}
 
-		return trip;
+		return updatedTrip;
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
@@ -137,24 +147,16 @@ export const mongoDeleteTrip: TripService['mongoDeleteTrip'] = async (userId, tr
 		const tripDeleted = await Trip.findOneAndDelete({
 			_id: tripId,
 			creator: userId,
-			status: { $in: ['created', 'cancelled'] },
+			status: { $nin: ['started', 'completed'] },
 		});
 
 		if (!tripDeleted) {
-			const trip = await Trip.findById(tripId);
-			if (!trip) {
-				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-			}
-
-			if (trip.creator.toString() !== userId) {
-				throw new AppError('Unauthorized', 'You are not authorized to delete this trip', 403, 'MongoDB');
-			}
-
-			if (trip.status !== 'created' && trip.status !== 'cancelled') {
-				throw new AppError('Forbidden', 'You can only delete created or cancelled trips', 403, 'MongoDB');
-			}
-
-			throw new AppError('InternalError', 'Error deleting trip', 500, 'MongoDB');
+			await handleWhyTripNotFoundMongo({
+				tripId,
+				userId,
+				action: 'delete',
+				nutAllowedStatuses: ['started', 'completed'],
+			});
 		}
 	} catch (error: any) {
 		if (error instanceof AppError) throw error;
@@ -175,20 +177,13 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 		).populate<{ participants: Participant[] }>('participants.userId');
 
 		if (!updateResult) {
-			const trip = await Trip.findById(tripId);
-			if (!trip) {
-				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-			}
-
-			if (trip.creator.toString() !== userId) {
-				throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
-			}
-
-			if (trip.status === status) {
-				throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
-			}
-
-			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
+			await handleWhyTripNotFoundMongo({
+				tripId,
+				userId,
+				action: 'update status',
+				statusToUpdate: status,
+				nutAllowedStatuses: [status],
+			});
 		}
 
 		return updateResult;
@@ -271,9 +266,18 @@ export const mongoGetTripsUserIsInParticipants: TripService['mongoGetTripsUserIs
 
 export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async (userId, tripId, { title, image }) => {
 	try {
-		const trip = await Trip.findOne({ _id: tripId, creator: userId });
-		if (!trip) {
-			throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
+		const updateTripReward = await Trip.findOne({
+			_id: tripId,
+			creator: userId,
+			status: { $nin: ['started', 'completed'] },
+		});
+		if (!updateTripReward) {
+			await handleWhyTripNotFoundMongo({
+				tripId,
+				userId,
+				action: 'update reward',
+				nutAllowedStatuses: ['started', 'completed'],
+			});
 		}
 
 		let lastRewardImage: string | null = null;
@@ -281,10 +285,10 @@ export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async
 
 		if (image) {
 			updateFields['reward.image'] = image;
-			lastRewardImage = trip.reward?.image;
+			lastRewardImage = updateTripReward.reward?.image;
 		}
 
-		await trip.updateOne({ $set: updateFields });
+		await updateTripReward.updateOne({ $set: updateFields });
 
 		return { deletedImage: lastRewardImage };
 	} catch (error) {
@@ -424,6 +428,7 @@ export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) =>
 // redis and mongo
 export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (tripId, userId, participants) => {
 	try {
+		const completedStatus = 'completed';
 		const updateResult = await Trip.findOneAndUpdate(
 			{
 				_id: tripId,
@@ -431,27 +436,20 @@ export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (
 				status: { $ne: 'completed' },
 			},
 			{
-				status: 'completed',
+				status: completedStatus,
 				participants,
 			},
 			{ new: true }
 		).populate<{ participants: Participant[] }>('participants.userId');
 
 		if (!updateResult) {
-			const trip = await Trip.findById(tripId);
-			if (!trip) {
-				throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
-			}
-
-			if (trip.creator.toString() !== userId) {
-				throw new AppError('Unauthorized', 'You are not authorized to update this trip', 403, 'MongoDB');
-			}
-
-			if (trip.status === 'completed') {
-				throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
-			}
-
-			throw new AppError('InternalError', 'Error updating trip', 500, 'MongoDB');
+			await handleWhyTripNotFoundMongo({
+				tripId,
+				userId,
+				action: 'finish',
+				statusToUpdate: completedStatus,
+				nutAllowedStatuses: [completedStatus],
+			});
 		}
 
 		return updateResult;
