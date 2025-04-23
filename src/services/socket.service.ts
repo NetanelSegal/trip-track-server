@@ -1,7 +1,7 @@
 import { ExtendedError, Server } from 'socket.io';
 import { Logger } from '../utils/Logger';
 import http from 'http';
-import { ValidationError } from '../utils/AppError';
+import { AppError, ValidationError } from '../utils/AppError';
 import {
 	ClientToServerEvents,
 	InterServerEvents,
@@ -56,40 +56,34 @@ export const socketInit = (io: SocketServer): void => {
 			try {
 				Logger.info(`User ${userId} finished experience #${index} with score ${score}`);
 
-				const userExistingData = await redisGetUserTripData(tripId, userId);
-				const updatedScores = [...userExistingData.score];
-				updatedScores[index] = score;
-
-				const updatedFinished = [...userExistingData.finishedExperiences];
-				updatedFinished[index] = true;
+				const userData = await redisGetUserTripData(tripId, userId);
+				if (userData.finishedExperiences[index]) {
+					throw new AppError('BadRequest', 'Experience already finished', 400, 'Redis');
+				}
 
 				const updatedData = await redisUpdateUserTripData(tripId, userId, {
-					score: updatedScores,
-					finishedExperiences: updatedFinished,
+					score: Object.assign([...userData.score], { [index]: score }),
+					finishedExperiences: Object.assign([...userData.finishedExperiences], { [index]: true }),
 				});
 
-				const experienceExistsData = await redisGetTripExperiences(tripId);
+				const tripExperiences = await redisGetTripExperiences(tripId);
+				const currentExperience = tripExperiences[index];
 
-				const winners = experienceExistsData[index].winners;
-				const emptySpot = winners.findIndex((winner) => winner === null || winner === userId);
-
-				if (emptySpot !== -1) {
-					winners[emptySpot] = userId;
-					experienceExistsData[index].winners = winners;
-					await redisUpdateTripExperiences(tripId, index, experienceExistsData[index]);
+				const emptySpotIndex = currentExperience.winners.findIndex((winner) => winner === null);
+				if (emptySpotIndex !== -1) {
+					currentExperience.winners[emptySpotIndex] = userId;
+					await redisUpdateTripExperiences(tripId, index, currentExperience);
 				}
-				console.log(userExistingData, updatedData, experienceExistsData);
-				io.to(tripId).emit('experienceFinished', socket.id, userId, index, score);
-			} catch (err) {
-				Logger.error(err);
+				io.to(tripId).emit('experienceFinished', updatedData, userId, index);
+			} catch (error) {
+				Logger.error(error);
 			}
 		});
 
 		socketDataValidator(socket, 'sendMessage', socketDataSchema.sendMessage);
 		socket.on('sendMessage', (tripId, message, userId) => {
 			console.log(tripId, message);
-
-			io.to(tripId).emit('messageSent', message, userId);
+			socket.to(tripId).emit('messageSent', message, userId);
 		});
 
 		socket.on('disconnect', () => {
