@@ -19,24 +19,15 @@ export function readFile(path: string): Promise<string> {
 }
 
 type TripStatus = (typeof TripStatusArray)[number];
-type ActionArgs =
-	| {
-			tripId: string;
-			userId: string;
-			action: 'update status' | 'finish';
-			statusToUpdate: TripStatus;
-			nutAllowedStatuses: TripStatus[];
-	  }
-	| {
-			tripId: string;
-			userId: string;
-			action: 'update' | 'update reward' | 'delete';
-			nutAllowedStatuses: TripStatus[];
-	  };
 
-export async function handleWhyTripNotFoundMongo(args: ActionArgs) {
-	const { tripId, userId, action, nutAllowedStatuses } = args;
+type TripNotFoundArgs = {
+	tripId: string;
+	userId: string;
+	action: 'update' | 'update-reward' | 'delete' | 'update-status' | 'finish';
+	notAllowedStatuses: TripStatus[];
+};
 
+export async function handleWhyTripNotFoundMongo({ tripId, userId, action, notAllowedStatuses }: TripNotFoundArgs) {
 	const trip = await Trip.findById(tripId);
 	if (!trip) {
 		throw new AppError('NotFound', 'Trip not found', 404, 'MongoDB');
@@ -46,14 +37,13 @@ export async function handleWhyTripNotFoundMongo(args: ActionArgs) {
 		throw new AppError('Unauthorized', `You are not authorized to ${action} trip`, 403, 'MongoDB');
 	}
 
-	if (nutAllowedStatuses.includes(trip.status)) {
-		const { statusToUpdate } = args as Extract<ActionArgs, { action: 'update status' }>;
-		console.log('statusToUpdate', statusToUpdate);
-
-		if (trip.status === statusToUpdate) {
-			throw new AppError('BadRequest', 'Trip is already in this status', 400, 'MongoDB');
-		}
-		throw new AppError('Forbidden', `You forbidden to ${action} trip with status: ${trip.status}`, 403, 'MongoDB');
+	if (notAllowedStatuses.includes(trip.status)) {
+		throw new AppError(
+			'Conflict',
+			`Cannot perform "${action}" while trip is in "${trip.status}" status.`,
+			409,
+			'MongoDB'
+		);
 	}
 	throw new AppError('InternalError', `Error ${action} trip`, 500, 'MongoDB');
 }

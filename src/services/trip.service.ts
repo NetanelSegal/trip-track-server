@@ -105,7 +105,7 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 				tripId,
 				userId,
 				action: 'update',
-				nutAllowedStatuses: ['started', 'completed'],
+				notAllowedStatuses: ['started', 'completed'],
 			});
 		}
 
@@ -155,7 +155,7 @@ export const mongoDeleteTrip: TripService['mongoDeleteTrip'] = async (userId, tr
 				tripId,
 				userId,
 				action: 'delete',
-				nutAllowedStatuses: ['started', 'completed'],
+				notAllowedStatuses: ['started', 'completed'],
 			});
 		}
 	} catch (error: any) {
@@ -180,9 +180,8 @@ export const mongoUpdateTripStatus: TripService['mongoUpdateTripStatus'] = async
 			await handleWhyTripNotFoundMongo({
 				tripId,
 				userId,
-				action: 'update status',
-				statusToUpdate: status,
-				nutAllowedStatuses: [status],
+				action: 'update-status',
+				notAllowedStatuses: [status],
 			});
 		}
 
@@ -275,8 +274,8 @@ export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async
 			await handleWhyTripNotFoundMongo({
 				tripId,
 				userId,
-				action: 'update reward',
-				nutAllowedStatuses: ['started', 'completed'],
+				action: 'update-reward',
+				notAllowedStatuses: ['started', 'completed'],
 			});
 		}
 
@@ -447,8 +446,7 @@ export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (
 				tripId,
 				userId,
 				action: 'finish',
-				statusToUpdate: completedStatus,
-				nutAllowedStatuses: [completedStatus],
+				notAllowedStatuses: [completedStatus],
 			});
 		}
 
