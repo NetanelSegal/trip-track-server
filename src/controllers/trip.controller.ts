@@ -23,7 +23,6 @@ import {
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
-import mongoose from 'mongoose';
 
 export const createTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -88,7 +87,17 @@ export const endTrip = async (req: Request, res: Response, next: NextFunction) =
 
 export const deleteTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		await mongoDeleteTrip((req as RequestJWTPayload).user._id, req.params.id);
+		const deletedTrip = await mongoDeleteTrip((req as RequestJWTPayload).user._id, req.params.id);
+
+		await redisDeleteTrip(req.params.id);
+
+		const imageUrl = deletedTrip?.reward?.image;
+		if (imageUrl) {
+			const url = new URL(imageUrl);
+			const s3Key = decodeURIComponent(url.pathname.substring(1));
+			await s3Service.deleteFile(s3Key);
+		}
+
 		res.json({ message: 'Trip deleted successfully' });
 	} catch (error) {
 		next(error);

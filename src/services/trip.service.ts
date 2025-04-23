@@ -32,7 +32,7 @@ interface TripService {
 	mongoUpdateTrip: (userId: string, tripId: string, data: Types['Trip']['Update']) => Promise<TripT>;
 	mongoGetTripById: (id: string) => Promise<TripT>;
 	mongoGetTrips: (userId: string, page?: number, limit?: number) => Promise<TripT[]>;
-	mongoDeleteTrip: (userId: string, tripId: string) => Promise<void>;
+	mongoDeleteTrip: (userId: string, tripId: string) => Promise<TripT>;
 	mongoUpdateTripStatus: (
 		userId: string,
 		tripId: string,
@@ -158,6 +158,8 @@ export const mongoDeleteTrip: TripService['mongoDeleteTrip'] = async (userId, tr
 				notAllowedStatuses: ['started', 'completed'],
 			});
 		}
+
+		return tripDeleted;
 	} catch (error: any) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
