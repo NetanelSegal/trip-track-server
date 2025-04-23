@@ -13,6 +13,13 @@ import { socketEventValidator } from '../middlewares/socketEventValidator';
 import { socketDataValidator } from '../middlewares/socketDataValidator';
 import { socketDataSchema } from '../validationSchemas/socketSchemas';
 
+import {
+	redisGetUserTripData,
+	redisUpdateUserTripData,
+	redisGetTripExperiences,
+	redisUpdateTripExperiences,
+} from './trip.service';
+
 export const createSocket = (server: http.Server): SocketServer => {
 	const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>(server, {
 		cors: {
@@ -44,9 +51,38 @@ export const socketInit = (io: SocketServer): void => {
 			socket.to(tripId).emit('locationUpdated', socket.id, location);
 		});
 
-		socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
-		socket.on('finishExperience', (tripId) => {
-			socket.to(tripId).emit('experienceFinished', socket.id);
+		// socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
+		socket.on('finishExperience', async (tripId, userId, index, score) => {
+			try {
+				Logger.info(`User ${userId} finished experience #${index} with score ${score}`);
+
+				const userExistingData = await redisGetUserTripData(tripId, userId);
+				const updatedScores = [...userExistingData.score];
+				updatedScores[index] = score;
+
+				const updatedFinished = [...userExistingData.finishedExperiences];
+				updatedFinished[index] = true;
+
+				const updatedData = await redisUpdateUserTripData(tripId, userId, {
+					score: updatedScores,
+					finishedExperiences: updatedFinished,
+				});
+
+				const experienceExistsData = await redisGetTripExperiences(tripId);
+
+				const winners = experienceExistsData[index].winners;
+				const emptySpot = winners.findIndex((winner) => winner === null || winner === userId);
+
+				if (emptySpot !== -1) {
+					winners[emptySpot] = userId;
+					experienceExistsData[index].winners = winners;
+					await redisUpdateTripExperiences(tripId, index, experienceExistsData[index]);
+				}
+				console.log(userExistingData, updatedData, experienceExistsData);
+				io.to(tripId).emit('experienceFinished', socket.id, userId, index, score);
+			} catch (err) {
+				Logger.error(err);
+			}
 		});
 
 		socketDataValidator(socket, 'sendMessage', socketDataSchema.sendMessage);
