@@ -163,49 +163,64 @@ class RedisDAL {
 		}
 	}
 
-	async addValueToHash<T>(tripKey: string, userId: string, value: T): Promise<void> {
+	async addValueToHash<T>(redisKey: string, hashKey: string, value: T): Promise<void> {
 		try {
 			await this.ensureConnected();
-			await this.redisClient.hSet(tripKey, userId, JSON.stringify(value));
+			await this.redisClient.hSet(redisKey, hashKey, JSON.stringify(value));
 		} catch (error) {
 			throw new AppError(error.name, error.message, 500, 'Redis');
 		}
 	}
 
-	async removeValueFromHash(tripKey: string, userId: string): Promise<void> {
+	async removeHashKeyFromHash<T>(redisKey: string, hashKey: string): Promise<{ [hashKey: string]: T }> {
 		try {
 			await this.ensureConnected();
-			await this.redisClient.hDel(tripKey, userId);
+			const deletedValue = await this.redisClient.hGet(redisKey, hashKey);
+			if (deletedValue) {
+				await this.redisClient.hDel(redisKey, hashKey);
+			} else {
+				throw new AppError('HashKey not found', 'HashKey not found', 404, 'Redis');
+			}
+			return { [hashKey]: JSON.parse(deletedValue) as T };
+		} catch (error) {
+			if (error instanceof AppError) throw error;
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async updateValueInHash<T>(redisKey: string, hashKey: string, value: T): Promise<void> {
+		try {
+			await this.ensureConnected();
+			await this.redisClient.hSet(redisKey, hashKey, JSON.stringify(value));
 		} catch (error) {
 			throw new AppError(error.name, error.message, 500, 'Redis');
 		}
 	}
 
-	async updateValueInHash<T>(tripKey: string, userId: string, value: T): Promise<void> {
-		await this.ensureConnected();
-		await this.redisClient.hSet(tripKey, userId, JSON.stringify(value));
-	}
-
-	async initUsersHash<T>(tripKey: string, users: string[], value: T): Promise<void> {
-		await this.ensureConnected();
-		const multi = this.redisClient.multi();
-		for (const userId of users) {
-			multi.hSet(tripKey, userId, JSON.stringify(value));
-		}
-		await multi.exec();
-	}
-
-	async getAllValuesFromHash<T>(tripKey: string): Promise<{ [userId: string]: T }> {
+	async initRadisHashKeys<T>(redisKey: string, hashKeys: string[], value: T): Promise<void> {
 		try {
 			await this.ensureConnected();
-			const usersHash = await this.redisClient.hGetAll(tripKey);
+			const multi = this.redisClient.multi();
+			for (const hashKey of hashKeys) {
+				multi.hSet(redisKey, hashKey, JSON.stringify(value));
+			}
+			await multi.exec();
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
 
-			const parsedUsers: { [userId: string]: T } = {};
-			for (const [userId, value] of Object.entries(usersHash)) {
-				parsedUsers[userId] = JSON.parse(value) as T;
+	async getAllValuesFromHash<T>(redisKey: string): Promise<{ [hashKey: string]: T }> {
+		try {
+			await this.ensureConnected();
+			const hashKeys = await this.redisClient.hGetAll(redisKey);
+
+			const result: { [hashKey: string]: T } = {};
+			for (const [hashKey, value] of Object.entries(hashKeys)) {
+				result[hashKey] = JSON.parse(value) as T;
 			}
 
-			return parsedUsers;
+			return result;
 		} catch (error) {
 			throw new AppError(error.name, error.message, 500, 'Redis');
 		}

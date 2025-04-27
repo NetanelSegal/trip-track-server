@@ -75,6 +75,7 @@ interface TripService {
 	redisDeleteTrip: (tripId: string) => Promise<void>;
 
 	redisSetUserInTripExpRange: (tripId: string, data: { userId: string; isExist: boolean }) => Promise<void>;
+	redisInitUsersInTripExpRange: (tripId: string) => Promise<void>;
 	redisGetUsersInTripExpRange: (tripId: string) => Promise<
 		{
 			userId: string;
@@ -83,7 +84,6 @@ interface TripService {
 	>;
 	redisGetTripCurrentExpIndex: (tripId: string) => Promise<number>;
 	redisIncrementTripCurrentExpIndex: (tripId: string, index?: number) => Promise<number>;
-	redisInitUsersInTripExpRange: (tripId: string) => Promise<void>;
 
 	// end trip in redis and mongo
 	redisAndMongoEndTrip: (
@@ -443,7 +443,7 @@ export const redisInitUsersInTripExpRange: TripService['redisInitUsersInTripExpR
 
 	const leaderboard = await RedisCache.getMembersFromSortedSet(leaderboardKey);
 
-	await RedisCache.initUsersHash<boolean>(
+	await RedisCache.initRadisHashKeys<boolean>(
 		tripExperiencesKey,
 		leaderboard.map((user) => user.value),
 		false
@@ -476,7 +476,6 @@ export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripC
 	const updatedIndex = currentExpIndex !== undefined ? currentExpIndex + index : 0;
 
 	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: updatedIndex, expirationTime: 60 * 60 * 24 });
-
 	return updatedIndex;
 };
 // redis and mongo
