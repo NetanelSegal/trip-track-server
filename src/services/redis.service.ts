@@ -162,6 +162,54 @@ class RedisDAL {
 			throw new AppError(error.name, error.message, 500, 'Redis');
 		}
 	}
+
+	async addValueToHash<T>(tripKey: string, userId: string, value: T): Promise<void> {
+		try {
+			await this.ensureConnected();
+			await this.redisClient.hSet(tripKey, userId, JSON.stringify(value));
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async removeValueFromHash(tripKey: string, userId: string): Promise<void> {
+		try {
+			await this.ensureConnected();
+			await this.redisClient.hDel(tripKey, userId);
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async updateValueInHash<T>(tripKey: string, userId: string, value: T): Promise<void> {
+		await this.ensureConnected();
+		await this.redisClient.hSet(tripKey, userId, JSON.stringify(value));
+	}
+
+	async initUsersHash<T>(tripKey: string, users: string[], value: T): Promise<void> {
+		await this.ensureConnected();
+		const multi = this.redisClient.multi();
+		for (const userId of users) {
+			multi.hSet(tripKey, userId, JSON.stringify(value));
+		}
+		await multi.exec();
+	}
+
+	async getAllValuesFromHash<T>(tripKey: string): Promise<{ [userId: string]: T }> {
+		try {
+			await this.ensureConnected();
+			const usersHash = await this.redisClient.hGetAll(tripKey);
+
+			const parsedUsers: { [userId: string]: T } = {};
+			for (const [userId, value] of Object.entries(usersHash)) {
+				parsedUsers[userId] = JSON.parse(value) as T;
+			}
+
+			return parsedUsers;
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
 }
 
 const RedisCache = new RedisDAL();
