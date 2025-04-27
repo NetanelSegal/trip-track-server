@@ -19,4 +19,5 @@ export const socketDataSchema = {
 			.min(1, 'Message must be at least 1 character long'),
 		z.string({ message: 'userId must be a string' }),
 	],
+	userInExperience: Schemas.mongoObjectId,
 };

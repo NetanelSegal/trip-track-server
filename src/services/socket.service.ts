@@ -44,6 +44,15 @@ export const socketInit = (io: SocketServer): void => {
 			socket.to(tripId).emit('locationUpdated', socket.id, location);
 		});
 
+		socketDataValidator(socket, 'userInExperience', socketDataSchema.userInExperience);
+		socket.on('userInExperience', (tripId) => {
+			// TODO check if all users are in experience redis
+			const isAllUSersInExperience = false;
+			if (isAllUSersInExperience) {
+				socket.to(tripId).emit('allUsersInExperience', isAllUSersInExperience);
+			}
+		});
+
 		socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
 		socket.on('finishExperience', (tripId) => {
 			socket.to(tripId).emit('experienceFinished', socket.id);
