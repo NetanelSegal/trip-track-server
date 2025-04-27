@@ -73,6 +73,13 @@ interface TripService {
 		data: IRedisTripExperience
 	) => Promise<IRedisTripExperience>;
 	redisDeleteTrip: (tripId: string) => Promise<void>;
+	redisSetUserInExperinceRange: (tripId: string, data: { userId: string; currentExpIndex: number }) => Promise<void>;
+	redisGetUsersInExperinceRange: (tripId: string) => Promise<
+		{
+			score: number;
+			value: string;
+		}[]
+	>;
 
 	// end trip in redis and mongo
 	redisAndMongoEndTrip: (
@@ -424,6 +431,17 @@ export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) =>
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
 	await RedisCache.deleteKey(tripExperiencesKey);
 	await RedisCache.deleteKey(leaderboardKey);
+};
+
+export const redisSetUserInExperinceRange: TripService['redisSetUserInExperinceRange'] = async (tripId, data) => {
+	const { userId, currentExpIndex } = data;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	await RedisCache.addToSortedSet(tripExperiencesKey, { value: userId, score: currentExpIndex });
+};
+
+export const redisGetUsersInExperinceRange: TripService['redisGetUsersInExperinceRange'] = async (tripId) => {
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	return await RedisCache.getMembersFromSortedSet(tripExperiencesKey);
 };
 
 // redis and mongo
