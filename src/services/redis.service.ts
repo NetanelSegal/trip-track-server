@@ -75,7 +75,7 @@ class RedisDAL {
 			if (redisData) return JSON.parse(redisData) as T;
 
 			const newValue = await callbackFn();
-			this.redisClient.SETEX(key, expirationTime, JSON.stringify(newValue));
+			await this.redisClient.SETEX(key, expirationTime, JSON.stringify(newValue));
 			return newValue;
 		} catch (error) {
 			throw new AppError(error.name, error.message, 500, 'Redis');
