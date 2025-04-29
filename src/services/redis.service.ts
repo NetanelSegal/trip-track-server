@@ -75,7 +75,7 @@ class RedisDAL {
 			if (redisData) return JSON.parse(redisData) as T;
 
 			const newValue = await callbackFn();
-			this.redisClient.SETEX(key, expirationTime, JSON.stringify(newValue));
+			await this.redisClient.SETEX(key, expirationTime, JSON.stringify(newValue));
 			return newValue;
 		} catch (error) {
 			throw new AppError(error.name, error.message, 500, 'Redis');
@@ -158,6 +158,69 @@ class RedisDAL {
 				REV: true,
 			});
 			return members;
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async addValueToHash<T>(redisKey: string, hashKey: string, value: T): Promise<void> {
+		try {
+			await this.ensureConnected();
+			await this.redisClient.hSet(redisKey, hashKey, JSON.stringify(value));
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async removeHashKeyFromHash<T>(redisKey: string, hashKey: string): Promise<{ [hashKey: string]: T }> {
+		try {
+			await this.ensureConnected();
+			const deletedValue = await this.redisClient.hGet(redisKey, hashKey);
+			if (deletedValue) {
+				await this.redisClient.hDel(redisKey, hashKey);
+			} else {
+				throw new AppError('HashKey not found', 'HashKey not found', 404, 'Redis');
+			}
+			return { [hashKey]: JSON.parse(deletedValue) as T };
+		} catch (error) {
+			if (error instanceof AppError) throw error;
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async updateValueInHash<T>(redisKey: string, hashKey: string, value: T): Promise<void> {
+		try {
+			await this.ensureConnected();
+			await this.redisClient.hSet(redisKey, hashKey, JSON.stringify(value));
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async initRadisHashKeys<T>(redisKey: string, hashKeys: string[], value: T): Promise<void> {
+		try {
+			await this.ensureConnected();
+			const multi = this.redisClient.multi();
+			for (const hashKey of hashKeys) {
+				multi.hSet(redisKey, hashKey, JSON.stringify(value));
+			}
+			await multi.exec();
+		} catch (error) {
+			throw new AppError(error.name, error.message, 500, 'Redis');
+		}
+	}
+
+	async getAllValuesFromHash<T>(redisKey: string): Promise<{ [hashKey: string]: T }> {
+		try {
+			await this.ensureConnected();
+			const hashKeys = await this.redisClient.hGetAll(redisKey);
+
+			const result: { [hashKey: string]: T } = {};
+			for (const [hashKey, value] of Object.entries(hashKeys)) {
+				result[hashKey] = JSON.parse(value) as T;
+			}
+
+			return result;
 		} catch (error) {
 			throw new AppError(error.name, error.message, 500, 'Redis');
 		}
