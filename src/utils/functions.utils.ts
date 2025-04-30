@@ -38,12 +38,7 @@ export async function handleWhyTripNotFoundMongo({ tripId, userId, action, notAl
 	}
 
 	if (notAllowedStatuses.includes(trip.status)) {
-		throw new AppError(
-			'Conflict',
-			`Cannot perform "${action}" while trip is in "${trip.status}" status.`,
-			409,
-			'MongoDB'
-		);
+		throw new AppError('Conflict', `Cannot perform ${action} while trip is in ${trip.status} status.`, 409, 'MongoDB');
 	}
 	throw new AppError('InternalError', `Error ${action} trip`, 500, 'MongoDB');
 }

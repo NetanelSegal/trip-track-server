@@ -1,7 +1,7 @@
 import { ExtendedError, Server } from 'socket.io';
 import { Logger } from '../utils/Logger';
 import http from 'http';
-import { ValidationError } from '../utils/AppError';
+import { AppError, ValidationError } from '../utils/AppError';
 import {
 	ClientToServerEvents,
 	InterServerEvents,
@@ -12,6 +12,13 @@ import {
 import { socketEventValidator } from '../middlewares/socketEventValidator';
 import { socketDataValidator } from '../middlewares/socketDataValidator';
 import { socketDataSchema } from '../validationSchemas/socketSchemas';
+
+import {
+	redisGetUserTripData,
+	redisUpdateUserTripData,
+	redisGetTripExperiences,
+	redisUpdateTripExperiences,
+} from './trip.service';
 
 export const createSocket = (server: http.Server): SocketServer => {
 	const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>(server, {
@@ -44,16 +51,39 @@ export const socketInit = (io: SocketServer): void => {
 			socket.to(tripId).emit('locationUpdated', socket.id, location);
 		});
 
-		socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
-		socket.on('finishExperience', (tripId) => {
-			socket.to(tripId).emit('experienceFinished', socket.id);
+		// socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
+		socket.on('finishExperience', async (tripId, userId, index, score) => {
+			try {
+				Logger.info(`User ${userId} finished experience #${index} with score ${score}`);
+
+				const userData = await redisGetUserTripData(tripId, userId);
+				if (userData.finishedExperiences[index]) {
+					throw new AppError('BadRequest', 'Experience already finished', 400, 'Redis');
+				}
+
+				const updatedData = await redisUpdateUserTripData(tripId, userId, {
+					score: Object.assign([...userData.score], { [index]: score }),
+					finishedExperiences: Object.assign([...userData.finishedExperiences], { [index]: true }),
+				});
+
+				const tripExperiences = await redisGetTripExperiences(tripId);
+				const currentExperience = tripExperiences[index];
+
+				const emptySpotIndex = currentExperience.winners.findIndex((winner) => winner === null);
+				if (emptySpotIndex !== -1) {
+					currentExperience.winners[emptySpotIndex] = userId;
+					await redisUpdateTripExperiences(tripId, index, currentExperience);
+				}
+				io.to(tripId).emit('experienceFinished', updatedData, userId, index);
+			} catch (error) {
+				Logger.error(error);
+			}
 		});
 
 		socketDataValidator(socket, 'sendMessage', socketDataSchema.sendMessage);
 		socket.on('sendMessage', (tripId, message, userId) => {
 			console.log(tripId, message);
-
-			io.to(tripId).emit('messageSent', message, userId);
+			socket.to(tripId).emit('messageSent', message, userId);
 		});
 
 		socket.on('disconnect', () => {

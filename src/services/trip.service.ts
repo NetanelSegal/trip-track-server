@@ -369,7 +369,7 @@ export const redisUpdateUserTripData: TripService['redisUpdateUserTripData'] = a
 		});
 	}
 
-	return { ...user, ...data };
+	return { ...user, ...data, userId };
 };
 
 export const redisGetUserTripData: TripService['redisGetUserTripData'] = async (tripId, userId) => {
