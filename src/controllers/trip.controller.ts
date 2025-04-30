@@ -87,9 +87,14 @@ export const endTrip = async (req: Request, res: Response, next: NextFunction) =
 
 export const deleteTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const deletedTrip = await mongoDeleteTrip((req as RequestJWTPayload).user._id, req.params.id);
+		const tripId = req.params.id;
+		const usersIds = await redisGetLeaderboard(tripId);
+		const promises = usersIds.map(({ value }) => redisRemoveUserFromTrip(tripId, value));
+		await Promise.all(promises);
 
-		await redisDeleteTrip(req.params.id);
+		await redisDeleteTrip(tripId);
+
+		const deletedTrip = await mongoDeleteTrip((req as RequestJWTPayload).user._id, req.params.id);
 
 		const imageUrl = deletedTrip?.reward?.image;
 		if (imageUrl) {

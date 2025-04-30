@@ -74,6 +74,17 @@ interface TripService {
 	) => Promise<IRedisTripExperience>;
 	redisDeleteTrip: (tripId: string) => Promise<void>;
 
+	redisSetUserInTripExpRange: (tripId: string, data: { userId: string; isExist: boolean }) => Promise<void>;
+	redisInitUsersInTripExpRange: (tripId: string) => Promise<void>;
+	redisGetUsersInTripExpRange: (tripId: string) => Promise<
+		{
+			userId: string;
+			isExist: boolean;
+		}[]
+	>;
+	redisGetTripCurrentExpIndex: (tripId: string) => Promise<number>;
+	redisIncrementTripCurrentExpIndex: (tripId: string, index?: number) => Promise<number>;
+
 	// end trip in redis and mongo
 	redisAndMongoEndTrip: (
 		tripId: string,
@@ -358,7 +369,7 @@ export const redisUpdateUserTripData: TripService['redisUpdateUserTripData'] = a
 		});
 	}
 
-	return { ...user, ...data };
+	return { ...user, ...data, userId };
 };
 
 export const redisGetUserTripData: TripService['redisGetUserTripData'] = async (tripId, userId) => {
@@ -426,6 +437,47 @@ export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) =>
 	await RedisCache.deleteKey(leaderboardKey);
 };
 
+export const redisInitUsersInTripExpRange: TripService['redisInitUsersInTripExpRange'] = async (tripId) => {
+	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+
+	const leaderboard = await RedisCache.getMembersFromSortedSet(leaderboardKey);
+
+	await RedisCache.initRadisHashKeys<boolean>(
+		tripExperiencesKey,
+		leaderboard.map((user) => user.value),
+		false
+	);
+};
+
+export const redisSetUserInTripExpRange: TripService['redisSetUserInTripExpRange'] = async (tripId, data) => {
+	const { userId, isExist } = data;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	await RedisCache.updateValueInHash<boolean>(tripExperiencesKey, userId, isExist);
+};
+
+export const redisGetUsersInTripExperinceRange: TripService['redisGetUsersInTripExpRange'] = async (tripId) => {
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	const usersInExperinceRange = await RedisCache.getAllValuesFromHash<boolean>(tripExperiencesKey);
+	return Object.keys(usersInExperinceRange).map((userId) => ({ userId, isExist: usersInExperinceRange[userId] }));
+};
+
+export const redisGetTripCurrentExpIndex: TripService['redisGetTripCurrentExpIndex'] = async (tripId) => {
+	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
+	return await RedisCache.getValueByKey<number>(corentExpIndexKey);
+};
+
+export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripCurrentExpIndex'] = async (
+	tripId,
+	index = 1
+) => {
+	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
+	const currentExpIndex = await RedisCache.getValueByKey<number>(corentExpIndexKey);
+	const updatedIndex = currentExpIndex !== undefined ? currentExpIndex + index : 0;
+
+	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: updatedIndex, expirationTime: 60 * 60 * 24 });
+	return updatedIndex;
+};
 // redis and mongo
 export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (tripId, userId, participants) => {
 	try {
