@@ -11,7 +11,7 @@ type ClientEventPayloads = {
 	updateLocation: [tripId: string, location: LocationPayload];
 	finishExperience: [tripId: string, userId: string, index: number, score: number];
 	sendMessage: [tripId: string, message: string, userId: string];
-	userInExperience: [tripId: string];
+	userInExperience: [tripId: string, userId: string, index: number];
 	'connect-error': [error: Error];
 };
 

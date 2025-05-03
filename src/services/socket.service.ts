@@ -18,6 +18,10 @@ import {
 	redisUpdateUserTripData,
 	redisGetTripExperiences,
 	redisUpdateTripExperiences,
+	redisGetLeaderboard,
+	redisGetTripCurrentExpIndex,
+	redisSetUserInTripExpRange,
+	redisGetUsersInTripExperinceRange,
 } from './trip.service';
 
 export const createSocket = (server: http.Server): SocketServer => {
@@ -52,15 +56,21 @@ export const socketInit = (io: SocketServer): void => {
 		});
 
 		socketDataValidator(socket, 'userInExperience', socketDataSchema.userInExperience);
-		socket.on('userInExperience', (tripId) => {
-			// TODO check if all users are in experience redis
-			const isAllUSersInExperience = false;
+		socket.on('userInExperience', async (tripId, userId, index) => {
+			if (index !== (await redisGetTripCurrentExpIndex(tripId))) return;
+
+			await redisSetUserInTripExpRange(tripId, { userId, isExist: true });
+
+			const leaderboard = await redisGetLeaderboard(tripId);
+			const usersInTripExpRange = await redisGetUsersInTripExperinceRange(tripId);
+			const isAllUSersInExperience =
+				leaderboard.length === usersInTripExpRange.filter((user) => user.isExist === true).length;
 			if (isAllUSersInExperience) {
 				socket.to(tripId).emit('allUsersInExperience', isAllUSersInExperience);
 			}
 		});
 
-		// socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
+		socketDataValidator(socket, 'finishExperience', socketDataSchema.finishExperience);
 		socket.on('finishExperience', async (tripId, userId, index, score) => {
 			try {
 				Logger.info(`User ${userId} finished experience #${index} with score ${score}`);
@@ -70,10 +80,9 @@ export const socketInit = (io: SocketServer): void => {
 					throw new AppError('BadRequest', 'Experience already finished', 400, 'Redis');
 				}
 
-				const updatedData = await redisUpdateUserTripData(tripId, userId, {
-					score: Object.assign([...userData.score], { [index]: score }),
-					finishedExperiences: Object.assign([...userData.finishedExperiences], { [index]: true }),
-				});
+				userData.score[index] = score;
+				userData.finishedExperiences[index] = true;
+				const updatedData = await redisUpdateUserTripData(tripId, userId, userData);
 
 				const tripExperiences = await redisGetTripExperiences(tripId);
 				const currentExperience = tripExperiences[index];
