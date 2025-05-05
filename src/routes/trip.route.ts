@@ -17,6 +17,7 @@ import {
 	removeUserFromTrip,
 	deleteTrip,
 	endTrip,
+	getTripCurrentExpIndex,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -42,6 +43,13 @@ router.get(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	authenticateToken({ allowGuest: true }),
 	getAllUsersTripData
+);
+
+router.get(
+	'/:id/current-exp-index',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	getTripCurrentExpIndex
 );
 
 router.post(

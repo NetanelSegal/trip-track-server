@@ -445,31 +445,35 @@ export const redisUpdateTripExperiences: TripService['redisUpdateTripExperiences
 export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) => {
 	const tripExperiencesKey = `trip_experiences:${tripId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
+	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
 	await RedisCache.deleteKey(tripExperiencesKey);
 	await RedisCache.deleteKey(leaderboardKey);
+	await RedisCache.deleteKey(tripUserInExpRangeKey);
+	await RedisCache.deleteKey(corentExpIndexKey);
 };
 
 export const redisInitUsersInTripExpRange: TripService['redisInitUsersInTripExpRange'] = async (tripId) => {
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
-	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
 
 	const leaderboard = await RedisCache.getMembersFromSortedSet(leaderboardKey);
 
 	await RedisCache.initRadisHashKeys<IRedisTripExpRangeData>(
-		tripExperiencesKey,
+		tripUserInExpRangeKey,
 		leaderboard.map((user) => user.value),
 		{ isExist: false, isFinshed: false }
 	);
 };
 
 export const redisSetUserInTripExpRange: TripService['redisSetUserInTripExpRange'] = async (tripId, userId, data) => {
-	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
-	await RedisCache.updateValueInHash<IRedisTripExpRangeData>(tripExperiencesKey, userId, data);
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
+	await RedisCache.updateValueInHash<IRedisTripExpRangeData>(tripUserInExpRangeKey, userId, data);
 };
 
 export const redisGetUsersInTripExperinceRange: TripService['redisGetUsersInTripExpRange'] = async (tripId) => {
-	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
-	const usersInExperinceRange = await RedisCache.getAllValuesFromHash<IRedisTripExpRangeData>(tripExperiencesKey);
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
+	const usersInExperinceRange = await RedisCache.getAllValuesFromHash<IRedisTripExpRangeData>(tripUserInExpRangeKey);
 	return Object.keys(usersInExperinceRange).map((userId) => ({ userId, data: usersInExperinceRange[userId] }));
 };
 

@@ -23,6 +23,7 @@ import {
 	redisSetUserInTripExpRange,
 	redisGetUsersInTripExperinceRange,
 	redisIncrementTripCurrentExpIndex,
+	redisInitUsersInTripExpRange,
 } from './trip.service';
 import { date } from 'zod';
 
@@ -99,6 +100,7 @@ export const socketInit = (io: SocketServer): void => {
 				const usersInTripExpRange = await redisGetUsersInTripExperinceRange(tripId);
 				const isNotAllUsersFinished = usersInTripExpRange.filter((user) => user.data.isFinshed === false).length > 0;
 				if (!isNotAllUsersFinished) {
+					await redisInitUsersInTripExpRange(tripId);
 					const nextExpIndex = await redisIncrementTripCurrentExpIndex(tripId);
 					io.to(tripId).emit('allUsersFinishedCorrentExp', nextExpIndex);
 				}

@@ -20,6 +20,8 @@ import {
 	redisInitializeTripExperiences,
 	redisDeleteTrip,
 	redisAndMongoEndTrip,
+	redisGetTripCurrentExpIndex,
+	redisInitUsersInTripExpRange,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -53,6 +55,7 @@ export const startTrip = async (req: Request, res: Response, next: NextFunction)
 		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience ? count + 1 : count), 0);
 
 		await redisInitializeTripExperiences(tripId, experienceCount);
+		await redisInitUsersInTripExpRange(tripId);
 
 		res.json({ updatedTrip });
 	} catch (error) {
@@ -272,6 +275,17 @@ export const removeUserFromTrip = async (req: Request, res: Response, next: Next
 		await redisRemoveUserFromTrip(req.params.id, (req as RequestJWTPayload).user._id);
 		res.json({
 			message: `user ${(req as RequestJWTPayload).user._id} was seccussfuly deleted from trip ${req.params.id}`,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const getTripCurrentExpIndex = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const data = await redisGetTripCurrentExpIndex(req.params.id);
+		res.json({
+			data,
 		});
 	} catch (error) {
 		next(error);
