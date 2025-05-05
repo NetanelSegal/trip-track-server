@@ -22,7 +22,9 @@ import {
 	redisGetTripCurrentExpIndex,
 	redisSetUserInTripExpRange,
 	redisGetUsersInTripExperinceRange,
+	redisIncrementTripCurrentExpIndex,
 } from './trip.service';
+import { date } from 'zod';
 
 export const createSocket = (server: http.Server): SocketServer => {
 	const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>(server, {
@@ -59,10 +61,10 @@ export const socketInit = (io: SocketServer): void => {
 		socket.on('userInExperience', async (tripId, userId, index) => {
 			if (index !== (await redisGetTripCurrentExpIndex(tripId))) return;
 
-			await redisSetUserInTripExpRange(tripId, { userId, isExist: true });
+			await redisSetUserInTripExpRange(tripId, userId, { isExist: true, isFinshed: false });
 
 			const usersInTripExpRange = await redisGetUsersInTripExperinceRange(tripId);
-			const isNotAllUSersInExperience = usersInTripExpRange.filter((user) => user.isExist === false).length > 0;
+			const isNotAllUSersInExperience = usersInTripExpRange.filter((user) => user.data.isExist === false).length > 0;
 			if (!isNotAllUSersInExperience) {
 				socket.to(tripId).emit('allUsersInExperience', isNotAllUSersInExperience);
 			}
@@ -90,7 +92,16 @@ export const socketInit = (io: SocketServer): void => {
 					currentExperience.winners[emptySpotIndex] = userId;
 					await redisUpdateTripExperiences(tripId, index, currentExperience);
 				}
+				await redisSetUserInTripExpRange(tripId, userId, { isExist: true, isFinshed: true });
+
 				io.to(tripId).emit('experienceFinished', updatedData, userId, index);
+
+				const usersInTripExpRange = await redisGetUsersInTripExperinceRange(tripId);
+				const isNotAllUsersFinished = usersInTripExpRange.filter((user) => user.data.isFinshed === false).length > 0;
+				if (!isNotAllUsersFinished) {
+					const nextExpIndex = await redisIncrementTripCurrentExpIndex(tripId);
+					io.to(tripId).emit('allUsersFinishedCorrentExp', nextExpIndex);
+				}
 			} catch (error) {
 				Logger.error(error);
 			}
