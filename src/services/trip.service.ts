@@ -313,6 +313,7 @@ export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async
 export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (tripId, { userId, name, imageUrl }) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
 
 	const userTripData: IRedisUserTripData = {
 		name: name,
@@ -320,6 +321,8 @@ export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (trip
 		score: [],
 		finishedExperiences: [],
 	};
+
+	await RedisCache.addValueToHash(tripExperiencesKey, userId, false);
 
 	await RedisCache.setKeyWithValue({
 		key: userKey,
@@ -335,12 +338,16 @@ export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (trip
 export const redisRemoveUserFromTrip: TripService['redisRemoveUserFromTrip'] = async (tripId, userId) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
 
 	let res = await RedisCache.deleteKey(userKey);
 	if (res === 0) throw new AppError('TripRedisError', "Couldn't delete user data from redis");
 
 	res = await RedisCache.removeFromSortedSet(leaderboardKey, userId);
 	if (res === 0) throw new AppError('TripRedisError', "Couldn't delete user data from redis");
+
+	const resHash = await RedisCache.removeHashKeyFromHash(tripExperiencesKey, userId);
+	if (!resHash) throw new AppError('TripRedisError', "Couldn't delete user data from redis");
 
 	return true;
 };

@@ -61,12 +61,10 @@ export const socketInit = (io: SocketServer): void => {
 
 			await redisSetUserInTripExpRange(tripId, { userId, isExist: true });
 
-			const leaderboard = await redisGetLeaderboard(tripId);
 			const usersInTripExpRange = await redisGetUsersInTripExperinceRange(tripId);
-			const isAllUSersInExperience =
-				leaderboard.length === usersInTripExpRange.filter((user) => user.isExist === true).length;
-			if (isAllUSersInExperience) {
-				socket.to(tripId).emit('allUsersInExperience', isAllUSersInExperience);
+			const isNotAllUSersInExperience = usersInTripExpRange.filter((user) => user.isExist === false).length > 0;
+			if (!isNotAllUSersInExperience) {
+				socket.to(tripId).emit('allUsersInExperience', isNotAllUSersInExperience);
 			}
 		});
 
