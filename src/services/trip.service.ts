@@ -46,6 +46,7 @@ interface TripService {
 		tripId: string,
 		reward: TripType['reward']
 	) => Promise<{ deletedImage: string | null }>;
+	mongoUpdateGuides: (tripId: string, userId: string, guideIds: string[]) => Promise<void>;
 
 	// redis related functions
 	redisAddUserToTrip: (
@@ -303,6 +304,34 @@ export const mongoUpdateTripReward: TripService['mongoUpdateTripReward'] = async
 		await updateTripReward.updateOne({ $set: updateFields });
 
 		return { deletedImage: lastRewardImage };
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const mongoUpdateGuides: TripService['mongoUpdateGuides'] = async (tripId, creatorId, guideIds) => {
+	try {
+		const trip = await Trip.findOneAndUpdate(
+			{
+				_id: tripId,
+				creator: creatorId,
+				status: { $nin: ['completed', 'cancelled'] },
+			},
+			{
+				$set: { guides: guideIds },
+			},
+			{ new: true }
+		);
+
+		if (!trip) {
+			await handleWhyTripNotFoundMongo({
+				tripId,
+				userId: creatorId,
+				action: 'update-guides',
+				notAllowedStatuses: ['completed', 'cancelled'],
+			});
+		}
 	} catch (error) {
 		if (error instanceof AppError) throw error;
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
