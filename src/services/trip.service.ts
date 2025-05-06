@@ -316,7 +316,7 @@ export const mongoUpdateGuides: TripService['mongoUpdateGuides'] = async (tripId
 			{
 				_id: tripId,
 				creator: creatorId,
-				status: { $nin: ['completed'] },
+				status: { $nin: ['completed', 'cancelled'] },
 			},
 			{
 				$set: { guides: guideIds },
@@ -329,7 +329,7 @@ export const mongoUpdateGuides: TripService['mongoUpdateGuides'] = async (tripId
 				tripId,
 				userId: creatorId,
 				action: 'update-guides',
-				notAllowedStatuses: ['completed'],
+				notAllowedStatuses: ['completed', 'cancelled'],
 			});
 		}
 	} catch (error) {
