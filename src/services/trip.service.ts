@@ -130,7 +130,7 @@ export const mongoUpdateTrip: TripService['mongoUpdateTrip'] = async (userId, tr
 
 export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) => {
 	try {
-		const trip = await Trip.findById(tripId).populate('creator').populate('guides');
+		const trip = await Trip.findById(tripId).populate('creator').populate('guides').populate('participants.userId');
 		if (!trip) {
 			throw new AppError('Trip not found', 'Trip not found', 404, 'MongoDB');
 		}
