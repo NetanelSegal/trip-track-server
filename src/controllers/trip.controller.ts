@@ -22,6 +22,7 @@ import {
 	redisAndMongoEndTrip,
 	redisGetTripCurrentExpIndex,
 	redisInitUsersInTripExpRange,
+	mongoUpdateGuides,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -286,6 +287,18 @@ export const getTripCurrentExpIndex = async (req: Request, res: Response, next: 
 		const data = await redisGetTripCurrentExpIndex(req.params.id);
 		res.json({
 			data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const updeteGuideInTrip = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { guideIds } = req.body;
+		await mongoUpdateGuides(req.params.id, (req as RequestJWTPayload).user._id, guideIds);
+		res.json({
+			message: `trip ${req.params.id} was seccussfuly updated with guides`,
 		});
 	} catch (error) {
 		next(error);

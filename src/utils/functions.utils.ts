@@ -23,7 +23,7 @@ type TripStatus = (typeof TripStatusArray)[number];
 type TripNotFoundArgs = {
 	tripId: string;
 	userId: string;
-	action: 'update' | 'update-reward' | 'delete' | 'update-status' | 'finish';
+	action: string;
 	notAllowedStatuses: TripStatus[];
 };
 

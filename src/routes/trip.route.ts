@@ -18,6 +18,7 @@ import {
 	deleteTrip,
 	endTrip,
 	getTripCurrentExpIndex,
+	updeteGuideInTrip,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -25,7 +26,7 @@ import { authenticateToken } from '../middlewares/authenticateToken';
 import uploadMiddleware from '../middlewares/multerConfig';
 import { parseFormData } from '../middlewares/parseFormData';
 import { redisAddUserToTripSchema } from '../validationSchemas/redisTripSchemas';
-import { tripUpdateStatusSchema } from '../validationSchemas/tripSchemas';
+import { tripUpdateStatusSchema, tripGuideSchema } from '../validationSchemas/tripSchemas';
 
 const router = Router();
 
@@ -111,6 +112,14 @@ router.put(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	authenticateToken(),
 	removeUserFromTripParticipants
+);
+
+router.put(
+	'/update-guides/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	validateRequest(tripGuideSchema, 'body'),
+	authenticateToken(),
+	updeteGuideInTrip
 );
 
 router.delete(
