@@ -143,7 +143,11 @@ export const mongoGetTripById: TripService['mongoGetTripById'] = async (tripId) 
 export const mongoGetTrips: TripService['mongoGetTrips'] = async (userId, page = 1, limit = 10) => {
 	try {
 		const skip = (page - 1) * limit;
-		const trips = await Trip.find({ creator: userId }).skip(skip).limit(limit);
+		const trips = await Trip.find({ creator: userId })
+			.skip(skip)
+			.limit(limit)
+			.populate('creator')
+			.populate('participants.userId');
 		if (!trips) {
 			throw new AppError('Trips not found', 'Trips not found', 404, 'MongoDB');
 		}
@@ -268,7 +272,9 @@ export const mongoGetTripsUserIsInParticipants: TripService['mongoGetTripsUserIs
 	userId: string
 ) => {
 	try {
-		const trips = await Trip.find({ participants: { $elemMatch: { userId } } }).populate('participants.userId');
+		const trips = await Trip.find({ participants: { $elemMatch: { userId } } })
+			.populate('participants.userId')
+			.populate('creator');
 
 		return trips;
 	} catch (error) {
