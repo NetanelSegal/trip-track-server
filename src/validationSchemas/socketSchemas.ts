@@ -10,7 +10,12 @@ export const socketDataSchema = {
 			lat: z.number({ message: 'lat must be a number' }),
 		}),
 	],
-	finishExperience: Schemas.mongoObjectId,
+	finishExperience: [
+		Schemas.mongoObjectId,
+		z.string({ message: 'userId must be a string' }),
+		z.number({ message: 'index must be a number' }),
+		z.number({ message: 'score must be a number' }),
+	],
 	sendMessage: [
 		Schemas.mongoObjectId,
 		z
@@ -18,5 +23,10 @@ export const socketDataSchema = {
 			.max(300, 'Message must be at most 300 characters long')
 			.min(1, 'Message must be at least 1 character long'),
 		z.string({ message: 'userId must be a string' }),
+	],
+	userInExperience: [
+		Schemas.mongoObjectId,
+		z.string({ message: 'userId must be a string' }),
+		z.number({ message: 'index must be a number' }),
 	],
 };
