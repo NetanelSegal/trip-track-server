@@ -47,7 +47,7 @@ router.get(
 );
 
 router.get(
-	'/:id/current-exp-index',
+	'/current-exp-index/:id',
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	authenticateToken({ allowGuest: true }),
 	getTripCurrentExpIndex

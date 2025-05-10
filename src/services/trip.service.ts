@@ -24,7 +24,7 @@ interface IRedisTripExperience {
 
 interface IRedisTripExpRangeData {
 	isExist: boolean;
-	isFinshed: boolean;
+	isFinished: boolean;
 }
 
 type PopulatedTripWithParticipants = Omit<TripT, 'participants'> & { participants: Participant[] };
@@ -475,11 +475,11 @@ export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) =>
 	const tripExperiencesKey = `trip_experiences:${tripId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
 	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
-	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
+	const currentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
 	await RedisCache.deleteKey(tripExperiencesKey);
 	await RedisCache.deleteKey(leaderboardKey);
 	await RedisCache.deleteKey(tripUserInExpRangeKey);
-	await RedisCache.deleteKey(corentExpIndexKey);
+	await RedisCache.deleteKey(currentExpIndexKey);
 };
 
 export const redisInitUsersInTripExpRange: TripService['redisInitUsersInTripExpRange'] = async (tripId) => {
@@ -491,7 +491,7 @@ export const redisInitUsersInTripExpRange: TripService['redisInitUsersInTripExpR
 	await RedisCache.initRadisHashKeys<IRedisTripExpRangeData>(
 		tripUserInExpRangeKey,
 		leaderboard.map((user) => user.value),
-		{ isExist: false, isFinshed: false }
+		{ isExist: false, isFinished: false }
 	);
 };
 
