@@ -22,6 +22,11 @@ interface IRedisTripExperience {
 	active: boolean; // is experience active and users can enter the experience
 }
 
+interface IRedisTripExpRangeData {
+	isExist: boolean;
+	isFinished: boolean;
+}
+
 type PopulatedTripWithParticipants = Omit<TripT, 'participants'> & { participants: Participant[] };
 
 type TripT = TripType;
@@ -75,12 +80,12 @@ interface TripService {
 	) => Promise<IRedisTripExperience>;
 	redisDeleteTrip: (tripId: string) => Promise<void>;
 
-	redisSetUserInTripExpRange: (tripId: string, data: { userId: string; isExist: boolean }) => Promise<void>;
+	redisSetUserInTripExpRange: (tripId: string, userId: string, data: IRedisTripExpRangeData) => Promise<void>;
 	redisInitUsersInTripExpRange: (tripId: string) => Promise<void>;
 	redisGetUsersInTripExpRange: (tripId: string) => Promise<
 		{
 			userId: string;
-			isExist: boolean;
+			data: IRedisTripExpRangeData;
 		}[]
 	>;
 	redisGetTripCurrentExpIndex: (tripId: string) => Promise<number>;
@@ -348,6 +353,7 @@ export const mongoUpdateGuides: TripService['mongoUpdateGuides'] = async (tripId
 export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (tripId, { userId, name, imageUrl }) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
 
 	const userTripData: IRedisUserTripData = {
 		name: name,
@@ -355,6 +361,8 @@ export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (trip
 		score: [],
 		finishedExperiences: [],
 	};
+
+	await RedisCache.addValueToHash(tripExperiencesKey, userId, false);
 
 	await RedisCache.setKeyWithValue({
 		key: userKey,
@@ -370,12 +378,16 @@ export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (trip
 export const redisRemoveUserFromTrip: TripService['redisRemoveUserFromTrip'] = async (tripId, userId) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
 
 	let res = await RedisCache.deleteKey(userKey);
 	if (res === 0) throw new AppError('TripRedisError', "Couldn't delete user data from redis");
 
 	res = await RedisCache.removeFromSortedSet(leaderboardKey, userId);
 	if (res === 0) throw new AppError('TripRedisError', "Couldn't delete user data from redis");
+
+	const resHash = await RedisCache.removeHashKeyFromHash(tripExperiencesKey, userId);
+	if (!resHash) throw new AppError('TripRedisError', "Couldn't delete user data from redis");
 
 	return true;
 };
@@ -468,33 +480,36 @@ export const redisUpdateTripExperiences: TripService['redisUpdateTripExperiences
 export const redisDeleteTrip: TripService['redisDeleteTrip'] = async (tripId) => {
 	const tripExperiencesKey = `trip_experiences:${tripId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
+	const currentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
 	await RedisCache.deleteKey(tripExperiencesKey);
 	await RedisCache.deleteKey(leaderboardKey);
+	await RedisCache.deleteKey(tripUserInExpRangeKey);
+	await RedisCache.deleteKey(currentExpIndexKey);
 };
 
 export const redisInitUsersInTripExpRange: TripService['redisInitUsersInTripExpRange'] = async (tripId) => {
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
-	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
 
 	const leaderboard = await RedisCache.getMembersFromSortedSet(leaderboardKey);
 
-	await RedisCache.initRadisHashKeys<boolean>(
-		tripExperiencesKey,
+	await RedisCache.initRadisHashKeys<IRedisTripExpRangeData>(
+		tripUserInExpRangeKey,
 		leaderboard.map((user) => user.value),
-		false
+		{ isExist: false, isFinished: false }
 	);
 };
 
-export const redisSetUserInTripExpRange: TripService['redisSetUserInTripExpRange'] = async (tripId, data) => {
-	const { userId, isExist } = data;
-	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
-	await RedisCache.updateValueInHash<boolean>(tripExperiencesKey, userId, isExist);
+export const redisSetUserInTripExpRange: TripService['redisSetUserInTripExpRange'] = async (tripId, userId, data) => {
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
+	await RedisCache.updateValueInHash<IRedisTripExpRangeData>(tripUserInExpRangeKey, userId, data);
 };
 
 export const redisGetUsersInTripExperinceRange: TripService['redisGetUsersInTripExpRange'] = async (tripId) => {
-	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
-	const usersInExperinceRange = await RedisCache.getAllValuesFromHash<boolean>(tripExperiencesKey);
-	return Object.keys(usersInExperinceRange).map((userId) => ({ userId, isExist: usersInExperinceRange[userId] }));
+	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
+	const usersInExperinceRange = await RedisCache.getAllValuesFromHash<IRedisTripExpRangeData>(tripUserInExpRangeKey);
+	return Object.keys(usersInExperinceRange).map((userId) => ({ userId, data: usersInExperinceRange[userId] }));
 };
 
 export const redisGetTripCurrentExpIndex: TripService['redisGetTripCurrentExpIndex'] = async (tripId) => {
