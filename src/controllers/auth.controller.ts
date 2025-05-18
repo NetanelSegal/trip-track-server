@@ -99,6 +99,25 @@ export const createGuestToken = async (req: Request, res: Response) => {
 		});
 };
 
+export const updateGuestInfoToken = async (req: Request, res: Response) => {
+	const { name, imageUrl } = req.body;
+	const uuid = generateUUID();
+	const guestToken = generateGuestToken({ _id: uuid, role: 'guest', name, imageUrl });
+
+	res
+		.cookie('guestToken', guestToken, {
+			httpOnly: true,
+			secure: ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 15 * 60 * 1000,
+		})
+		.status(200)
+		.json({
+			message: 'Guest token updated successfully',
+			uuid,
+		});
+};
+
 export const validateToken = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { user } = req as RequestJWTPayload;
