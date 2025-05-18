@@ -51,6 +51,8 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 			role: user.role,
 		});
 
+		res.clearCookie('guestToken');
+
 		res
 			.cookie('accessToken', accessToken, {
 				httpOnly: true,
