@@ -110,7 +110,7 @@ export const socketInit = (io: SocketServer): void => {
 		socketDataValidator(socket, 'sendMessage', socketDataSchema.sendMessage);
 		socket.on('sendMessage', (tripId, message, userId) => {
 			console.log(tripId, message);
-			socket.to(tripId).emit('messageSent', message, userId);
+			io.to(tripId).emit('messageSent', message, userId);
 		});
 
 		socket.on('disconnect', () => {
