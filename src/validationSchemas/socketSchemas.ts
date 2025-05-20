@@ -29,4 +29,5 @@ export const socketDataSchema = {
 		z.string({ message: 'userId must be a string' }),
 		z.number({ message: 'index must be a number' }),
 	],
+	tripFinished: Schemas.mongoObjectId,
 };

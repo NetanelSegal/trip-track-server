@@ -101,6 +101,10 @@ export const socketInit = (io: SocketServer): void => {
 					await redisInitUsersInTripExpRange(tripId);
 					const nextExpIndex = await redisIncrementTripCurrentExpIndex(tripId);
 					io.to(tripId).emit('allUsersFinishedCurrentExp', nextExpIndex);
+
+					if (nextExpIndex === tripExperiences.length) {
+						io.to(tripId).emit('finishedTrip', tripId);
+					}
 				}
 			} catch (error) {
 				Logger.error(error);
@@ -111,6 +115,11 @@ export const socketInit = (io: SocketServer): void => {
 		socket.on('sendMessage', (tripId, message, userId) => {
 			console.log(tripId, message);
 			io.to(tripId).emit('messageSent', message, userId);
+		});
+
+		socketDataValidator(socket, 'tripFinished', socketDataSchema.tripFinished);
+		socket.on('tripFinished', (tripId) => {
+			io.to(tripId).emit('finishedTrip', tripId);
 		});
 
 		socket.on('disconnect', () => {
