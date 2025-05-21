@@ -92,7 +92,7 @@ interface TripService {
 	redisIncrementTripCurrentExpIndex: (tripId: string, index?: number) => Promise<number>;
 
 	// end trip in redis and mongo
-	redisAndMongoEndTrip: (
+	mongoEndTrip: (
 		tripId: string,
 		userId: string,
 		participants: { userId: string; score: number }[]
@@ -529,7 +529,7 @@ export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripC
 	return updatedIndex;
 };
 // redis and mongo
-export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (tripId, userId, participants) => {
+export const mongoEndTrip: TripService['mongoEndTrip'] = async (tripId, userId, participants) => {
 	try {
 		const completedStatus = 'completed';
 		const updateResult = await Trip.findOneAndUpdate(

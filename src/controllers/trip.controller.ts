@@ -19,13 +19,14 @@ import {
 	mongoUpdateTripReward,
 	redisInitializeTripExperiences,
 	redisDeleteTrip,
-	redisAndMongoEndTrip,
+	mongoEndTrip,
 	redisGetTripCurrentExpIndex,
 	redisInitUsersInTripExpRange,
 	mongoUpdateGuides,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
+import { Types } from 'mongoose';
 
 export const createTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -71,10 +72,12 @@ export const endTrip = async (req: Request, res: Response, next: NextFunction) =
 
 		const usersIds = await redisGetLeaderboard(tripId);
 
-		const updatedTrip = await redisAndMongoEndTrip(
+		const updatedTrip = await mongoEndTrip(
 			tripId,
 			userId,
-			usersIds.map(({ value, score }) => ({ userId: value, score }))
+			usersIds
+				.filter(({ value }) => Types.ObjectId.isValid(value))
+				.map(({ value, score }) => ({ userId: value, score }))
 		);
 
 		const promises = usersIds.map(({ value }) => redisRemoveUserFromTrip(tripId, value));
