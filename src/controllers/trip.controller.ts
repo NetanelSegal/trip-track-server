@@ -58,7 +58,6 @@ export const startTrip = async (req: Request, res: Response, next: NextFunction)
 
 		await redisInitializeTripExperiences(tripId, experienceCount);
 		await redisInitUsersInTripExpRange(tripId);
-
 		res.json({ updatedTrip });
 	} catch (error) {
 		next(error);
