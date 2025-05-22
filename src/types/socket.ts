@@ -12,6 +12,7 @@ type ClientEventPayloads = {
 	finishExperience: [tripId: string, userId: string, index: number, score: number];
 	sendMessage: [tripId: string, message: string, userId: string];
 	userInExperience: [tripId: string, userId: string, index: number];
+	tripFinished: [tripId: string];
 	'connect-error': [error: Error];
 };
 
@@ -23,6 +24,7 @@ type ServerEventPayloads = {
 	tripStatusChanged: [tripId: string, status: string];
 	allUsersInExperience: [isAllUSersInExperience: boolean];
 	allUsersFinishedCurrentExp: [nextExpIndex: number];
+	finishedTrip: [tripId: string];
 	error: [data: string | { message: string; errorDetails: Record<string, any> }];
 };
 
@@ -34,6 +36,7 @@ export const ServerEvents = {
 	tripStatusChanged: 'tripStatusChanged',
 	allUsersInExperience: 'allUsersInExperience',
 	allUsersFinishedCurrentExp: 'allUsersFinishedCurrentExp',
+	finishedTrip: 'finishedTrip',
 	error: 'error',
 };
 
@@ -43,6 +46,7 @@ export const ClientEvents = {
 	finishExperience: 'finishExperience',
 	sendMessage: 'sendMessage',
 	userInExperience: 'userInExperience',
+	tripFinished: 'tripFinished',
 	connectError: 'connect-error',
 } as const;
 
