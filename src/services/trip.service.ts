@@ -529,7 +529,7 @@ export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripC
 ) => {
 	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
 	const currentExpIndex = await RedisCache.getValueByKey<number>(corentExpIndexKey);
-	const updatedIndex = currentExpIndex !== undefined ? currentExpIndex + index : 0;
+	const updatedIndex = typeof currentExpIndex === 'number' ? currentExpIndex + index : 0;
 
 	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: updatedIndex, expirationTime: 60 * 60 * 24 });
 	return updatedIndex;
