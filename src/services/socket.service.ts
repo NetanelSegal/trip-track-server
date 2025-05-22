@@ -65,7 +65,7 @@ export const socketInit = (io: SocketServer): void => {
 			const usersInTripExpRange = await redisGetUsersInTripExperinceRange(tripId);
 			const allUsersInExperience = usersInTripExpRange.every((user) => user.data.isExist === true);
 			if (allUsersInExperience) {
-				socket.to(tripId).emit('allUsersInExperience', true);
+				io.to(tripId).emit('allUsersInExperience', true);
 			}
 		});
 
