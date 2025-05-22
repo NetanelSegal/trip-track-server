@@ -23,6 +23,7 @@ import {
 	redisGetTripCurrentExpIndex,
 	redisInitUsersInTripExpRange,
 	mongoUpdateGuides,
+	redisInitExpIndex,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
@@ -58,6 +59,7 @@ export const startTrip = async (req: Request, res: Response, next: NextFunction)
 
 		await redisInitializeTripExperiences(tripId, experienceCount);
 		await redisInitUsersInTripExpRange(tripId);
+		await redisInitExpIndex(tripId);
 
 		res.json({ updatedTrip });
 	} catch (error) {

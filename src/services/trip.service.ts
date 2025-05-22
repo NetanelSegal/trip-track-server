@@ -90,6 +90,7 @@ interface TripService {
 	>;
 	redisGetTripCurrentExpIndex: (tripId: string) => Promise<number>;
 	redisIncrementTripCurrentExpIndex: (tripId: string, index?: number) => Promise<number>;
+	redisInitExpIndex: (tripId: string) => Promise<void>;
 
 	// end trip in redis and mongo
 	mongoEndTrip: (
@@ -510,6 +511,11 @@ export const redisGetUsersInTripExperinceRange: TripService['redisGetUsersInTrip
 	const tripUserInExpRangeKey = `usersInExperinceRange:${tripId}`;
 	const usersInExperinceRange = await RedisCache.getAllValuesFromHash<IRedisTripExpRangeData>(tripUserInExpRangeKey);
 	return Object.keys(usersInExperinceRange).map((userId) => ({ userId, data: usersInExperinceRange[userId] }));
+};
+
+export const redisInitExpIndex: TripService['redisInitExpIndex'] = async (tripId) => {
+	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
+	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: 0, expirationTime: 60 * 60 * 24 });
 };
 
 export const redisGetTripCurrentExpIndex: TripService['redisGetTripCurrentExpIndex'] = async (tripId) => {
