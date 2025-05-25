@@ -90,9 +90,10 @@ interface TripService {
 	>;
 	redisGetTripCurrentExpIndex: (tripId: string) => Promise<number>;
 	redisIncrementTripCurrentExpIndex: (tripId: string, index?: number) => Promise<number>;
+	redisInitExpIndex: (tripId: string) => Promise<void>;
 
 	// end trip in redis and mongo
-	redisAndMongoEndTrip: (
+	mongoEndTrip: (
 		tripId: string,
 		userId: string,
 		participants: { userId: string; score: number }[]
@@ -512,6 +513,11 @@ export const redisGetUsersInTripExperinceRange: TripService['redisGetUsersInTrip
 	return Object.keys(usersInExperinceRange).map((userId) => ({ userId, data: usersInExperinceRange[userId] }));
 };
 
+export const redisInitExpIndex: TripService['redisInitExpIndex'] = async (tripId) => {
+	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
+	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: 0, expirationTime: 60 * 60 * 24 });
+};
+
 export const redisGetTripCurrentExpIndex: TripService['redisGetTripCurrentExpIndex'] = async (tripId) => {
 	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
 	return await RedisCache.getValueByKey<number>(corentExpIndexKey);
@@ -523,13 +529,13 @@ export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripC
 ) => {
 	const corentExpIndexKey = `tripCurrentExpIndex:${tripId}`;
 	const currentExpIndex = await RedisCache.getValueByKey<number>(corentExpIndexKey);
-	const updatedIndex = currentExpIndex !== undefined ? currentExpIndex + index : 0;
+	const updatedIndex = typeof currentExpIndex === 'number' ? currentExpIndex + index : 0;
 
 	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: updatedIndex, expirationTime: 60 * 60 * 24 });
 	return updatedIndex;
 };
 // redis and mongo
-export const redisAndMongoEndTrip: TripService['redisAndMongoEndTrip'] = async (tripId, userId, participants) => {
+export const mongoEndTrip: TripService['mongoEndTrip'] = async (tripId, userId, participants) => {
 	try {
 		const completedStatus = 'completed';
 		const updateResult = await Trip.findOneAndUpdate(
