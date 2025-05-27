@@ -55,7 +55,7 @@ export const startTrip = async (req: Request, res: Response, next: NextFunction)
 
 		const updatedTrip = await mongoUpdateTripStatus((req as RequestJWTPayload).user._id, tripId, 'started');
 
-		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience ? count + 1 : count), 0);
+		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience.data ? count + 1 : count), 0);
 
 		await redisInitializeTripExperiences(tripId, experienceCount);
 		await redisInitUsersInTripExpRange(tripId);
