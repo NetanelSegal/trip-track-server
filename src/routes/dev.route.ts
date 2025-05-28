@@ -2,9 +2,14 @@ import { Router } from 'express';
 import { requireDeveloper } from '../middlewares/requireDeveloper';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
-import { endTripMongoAndRedis, startTripMongoAndRedis } from '../services/trip.service';
-import { RequestJWTPayload } from '../types';
 import { authenticateToken } from '../middlewares/authenticateToken';
+import {
+	devGetTripDebugInfo,
+	devUpdateTripStatus,
+	devEndTrip,
+	devStartTrip,
+	devResetTrip,
+} from '../controllers/dev.controller';
 
 const router = Router();
 
@@ -13,16 +18,36 @@ router.put(
 	authenticateToken(),
 	requireDeveloper,
 	validateRequest(Schemas.mongoObjectId, 'params'),
-	async (req, res) => {
-		const userId = (req as RequestJWTPayload).user._id;
-		const tripId = req.params.id;
-		await endTripMongoAndRedis(tripId, userId);
-		await startTripMongoAndRedis(tripId, userId);
-		res.json({
-			success: true,
-			message: 'Trip reset successfully',
-		});
-	}
+	devResetTrip
+);
+router.put(
+	'/trip/start/:id',
+	authenticateToken(),
+	requireDeveloper,
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	devStartTrip
+);
+router.put(
+	'/trip/end/:id',
+	authenticateToken(),
+	requireDeveloper,
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	devEndTrip
+);
+router.put(
+	'/trip/status/:id/:status',
+	authenticateToken(),
+	requireDeveloper,
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	devUpdateTripStatus
+);
+
+router.get(
+	'/trip/debug/:id',
+	authenticateToken(),
+	requireDeveloper,
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	devGetTripDebugInfo
 );
 
 export { router as devRouter };
