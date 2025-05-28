@@ -2,7 +2,7 @@ import { Request } from 'express';
 
 interface BasePayload {
 	_id: string;
-	role: 'user' | 'guest';
+	role: 'user' | 'guest' | 'developer';
 	name?: string;
 	imageUrl?: string;
 }
@@ -16,7 +16,11 @@ interface GuestPayload extends BasePayload {
 	role: 'guest';
 }
 
-export type Payload = UserPayload | GuestPayload;
+interface DeveloperPayload extends BasePayload {
+	role: 'developer';
+}
+
+export type Payload = UserPayload | GuestPayload | DeveloperPayload;
 
 export interface RequestJWTPayload extends Request {
 	user: Payload;
