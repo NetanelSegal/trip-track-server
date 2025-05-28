@@ -7,6 +7,7 @@ import { ENV } from '../env.config';
 import { googleRouter } from './google.route';
 import { userRouter } from './user.route';
 import { uploadRouter } from './upload.route';
+import { devRouter } from './dev.route';
 
 const router = Router();
 
@@ -19,11 +20,20 @@ router.get('/health', async (_: Request, res: Response) => {
 	res.send('OK');
 });
 
+// Public routes
 router.use('/google', googleRouter);
 router.use('/auth', authRouter);
+
+// Protected routes
 router.use('/trip', tripRouter);
 router.use('/user', userRouter);
 router.use('/upload', uploadRouter);
+
+// Developer routes (only in development)
+if (ENV === 'development') {
+	router.use('/dev', devRouter);
+	Logger.info('Developer routes enabled at /dev/*');
+}
 
 router.use((err: AppError, _: Request, res: Response, _next: NextFunction) => {
 	Logger.error(err);

@@ -4,6 +4,7 @@ import RedisCache from './redis.service';
 import { Trip as TripType } from '../types/trip';
 import { TripStatusArray, Types } from 'trip-track-package';
 import { handleWhyTripNotFoundMongo } from '../utils/functions.utils';
+import { Types as MongoTypes } from 'mongoose';
 
 interface Participant {
 	userId: Types['User']['Model'];
@@ -92,12 +93,9 @@ interface TripService {
 	redisIncrementTripCurrentExpIndex: (tripId: string, index?: number) => Promise<number>;
 	redisInitExpIndex: (tripId: string) => Promise<void>;
 
-	// end trip in redis and mongo
-	mongoEndTrip: (
-		tripId: string,
-		userId: string,
-		participants: { userId: string; score: number }[]
-	) => Promise<PopulatedTripWithParticipants>;
+	// redis and mongo
+	startTripMongoAndRedis: (tripId: string, userId: string) => Promise<PopulatedTripWithParticipants>;
+	endTripMongoAndRedis: (tripId: string, userId: string) => Promise<PopulatedTripWithParticipants>;
 }
 
 // mongo
@@ -534,10 +532,34 @@ export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripC
 	await RedisCache.setKeyWithValue({ key: corentExpIndexKey, value: updatedIndex, expirationTime: 60 * 60 * 24 });
 	return updatedIndex;
 };
+
 // redis and mongo
-export const mongoEndTrip: TripService['mongoEndTrip'] = async (tripId, userId, participants) => {
+export const startTripMongoAndRedis: TripService['startTripMongoAndRedis'] = async (tripId, userId) => {
+	try {
+		const updatedTrip = await mongoUpdateTripStatus(userId, tripId, 'started');
+
+		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience ? count + 1 : count), 0);
+
+		await redisInitializeTripExperiences(tripId, experienceCount);
+		await redisInitUsersInTripExpRange(tripId);
+		await redisInitExpIndex(tripId);
+
+		return updatedTrip;
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+};
+
+export const endTripMongoAndRedis: TripService['endTripMongoAndRedis'] = async (tripId, userId) => {
 	try {
 		const completedStatus = 'completed';
+		const usersIds = await redisGetLeaderboard(tripId);
+
+		const participants = usersIds
+			.filter(({ value }) => MongoTypes.ObjectId.isValid(value))
+			.map(({ value, score }) => ({ userId: value, score }));
+
 		const updateResult = await Trip.findOneAndUpdate(
 			{
 				_id: tripId,
@@ -559,6 +581,12 @@ export const mongoEndTrip: TripService['mongoEndTrip'] = async (tripId, userId, 
 				notAllowedStatuses: [completedStatus],
 			});
 		}
+
+		const promises = usersIds.map(({ value }) => redisRemoveUserFromTrip(tripId, value));
+
+		await Promise.all(promises);
+
+		await redisDeleteTrip(tripId);
 
 		return updateResult;
 	} catch (error) {

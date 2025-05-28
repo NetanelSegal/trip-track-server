@@ -17,17 +17,14 @@ import {
 	mongoRemoveUserFromTripParticipants,
 	mongoGetTripsUserIsInParticipants,
 	mongoUpdateTripReward,
-	redisInitializeTripExperiences,
 	redisDeleteTrip,
-	mongoEndTrip,
+	endTripMongoAndRedis,
 	redisGetTripCurrentExpIndex,
-	redisInitUsersInTripExpRange,
 	mongoUpdateGuides,
-	redisInitExpIndex,
+	startTripMongoAndRedis,
 } from '../services/trip.service';
 import { RequestJWTPayload } from '../types';
 import { s3Service } from '../services/S3.service';
-import { Types } from 'mongoose';
 
 export const createTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -51,15 +48,7 @@ export const createTrip = async (req: Request, res: Response, next: NextFunction
 
 export const startTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const tripId = req.params.id;
-
-		const updatedTrip = await mongoUpdateTripStatus((req as RequestJWTPayload).user._id, tripId, 'started');
-
-		const experienceCount = updatedTrip.stops.reduce((count, stop) => (stop.experience ? count + 1 : count), 0);
-
-		await redisInitializeTripExperiences(tripId, experienceCount);
-		await redisInitUsersInTripExpRange(tripId);
-		await redisInitExpIndex(tripId);
+		const updatedTrip = await startTripMongoAndRedis(req.params.id, (req as RequestJWTPayload).user._id);
 
 		res.json({ updatedTrip });
 	} catch (error) {
@@ -72,21 +61,7 @@ export const endTrip = async (req: Request, res: Response, next: NextFunction) =
 		const tripId = req.params.id;
 		const userId = (req as RequestJWTPayload).user._id;
 
-		const usersIds = await redisGetLeaderboard(tripId);
-
-		const updatedTrip = await mongoEndTrip(
-			tripId,
-			userId,
-			usersIds
-				.filter(({ value }) => Types.ObjectId.isValid(value))
-				.map(({ value, score }) => ({ userId: value, score }))
-		);
-
-		const promises = usersIds.map(({ value }) => redisRemoveUserFromTrip(tripId, value));
-
-		await Promise.all(promises);
-
-		await redisDeleteTrip(tripId);
+		const updatedTrip = await endTripMongoAndRedis(tripId, userId);
 
 		res.json({ updatedTrip });
 	} catch (error) {
