@@ -16,6 +16,7 @@ import {
 	devRedisGetTripCurrentExpIndex,
 	devRedisGetLeaderboard,
 } from '../services/dev.service';
+import { TripStatusArray } from 'trip-track-package';
 
 export const devResetTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -65,10 +66,9 @@ export const devEndTrip = async (req: Request, res: Response, next: NextFunction
 export const devUpdateTripStatus = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const tripId = req.params.id;
-		const status = req.params.status;
+		const status = req.params.status as any;
 
-		const validStatuses = ['created', 'started', 'completed', 'canceled'];
-		if (!validStatuses.includes(status)) {
+		if (!TripStatusArray.includes(status)) {
 			return next(new AppError('BadRequest', `Invalid status: ${status}`, 400, 'Validation'));
 		}
 
