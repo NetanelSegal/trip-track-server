@@ -18,6 +18,7 @@ interface GuestPayload extends BasePayload {
 
 interface DeveloperPayload extends BasePayload {
 	role: 'developer';
+	email: string;
 }
 
 export type Payload = UserPayload | GuestPayload | DeveloperPayload;
