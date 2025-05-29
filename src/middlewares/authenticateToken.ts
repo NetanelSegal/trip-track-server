@@ -35,7 +35,7 @@ export const authenticateToken = ({ allowGuest = false }: { allowGuest?: boolean
 			if (refreshToken) {
 				const refreshUser = verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
 
-				if (refreshUser && refreshUser.role === 'user') {
+				if (refreshUser && refreshUser.role !== 'guest') {
 					Logger.info(`Refresh token is valid for email user ${refreshUser.email} generating new access token`);
 					const newAccessToken = generateAccessToken({
 						_id: refreshUser._id,
