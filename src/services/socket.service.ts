@@ -44,10 +44,10 @@ export const socketInit = (io: SocketServer): void => {
 		socketEventValidator(socket);
 
 		socketDataValidator(socket, 'joinTrip', socketDataSchema.joinTrip);
-		socket.on('joinTrip', (tripId) => {
+		socket.on('joinTrip', async (tripId, userId) => {
 			socket.join(tripId);
-			socket.to(tripId).emit('tripJoined', socket.id);
-
+			const user = await redisGetUserTripData(tripId, userId);
+			socket.to(tripId).emit('tripJoined', { userId, ...user });
 			Logger.info(`User ${socket.id} joined trip room: ${tripId}`);
 		});
 

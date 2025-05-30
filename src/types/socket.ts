@@ -7,7 +7,7 @@ type LocationPayload = {
 };
 
 type ClientEventPayloads = {
-	joinTrip: [tripId: string];
+	joinTrip: [tripId: string, userId: string];
 	updateLocation: [tripId: string, location: LocationPayload];
 	finishExperience: [tripId: string, userId: string, index: number, score: number];
 	sendMessage: [tripId: string, message: string, userId: string];
@@ -16,8 +16,12 @@ type ClientEventPayloads = {
 };
 
 type ServerEventPayloads = {
-	tripJoined: [userSocketId: string];
-	locationUpdated: [userSocketId: string, location: LocationPayload];
+	tripJoined: [
+		user: IRedisUserTripData & {
+			userId: string;
+		},
+	];
+	locationUpdated: [userId: string, location: LocationPayload];
 	experienceFinished: [updateData: IRedisUserTripData, userId: string, index: number];
 	messageSent: [message: string, userId: string];
 	tripStatusChanged: [tripId: string, status: string];
