@@ -2,7 +2,7 @@ import { Schemas } from 'trip-track-package';
 import { z } from 'zod';
 
 export const socketDataSchema = {
-	joinTrip: Schemas.mongoObjectId,
+	joinTrip: [Schemas.mongoObjectId, z.string({ message: 'userId must be a string' })],
 	updateLocation: [
 		Schemas.mongoObjectId,
 		z.object({
