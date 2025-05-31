@@ -56,6 +56,10 @@ export const socketInit = (io: SocketServer): void => {
 			socket.to(tripId).emit('locationUpdated', socket.id, location);
 		});
 
+		socket.on('currentUserOutOfTripRoute', (tripId, userId) => {
+			socket.to(tripId).emit('userIsOutOfTripRoute', userId);
+		});
+
 		socketDataValidator(socket, 'userInExperience', socketDataSchema.userInExperience);
 		socket.on('userInExperience', async (tripId, userId, index) => {
 			if (index !== (await redisGetTripCurrentExpIndex(tripId))) return;
