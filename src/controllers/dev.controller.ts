@@ -165,8 +165,13 @@ const endTripHelper = async (req: Request, next: NextFunction) => {
 		{ new: true }
 	).populate('participants.userId');
 
-	const promises = usersIds.map(({ value }) => redisRemoveUserFromTrip(tripId, value));
-	await Promise.all(promises);
+	usersIds.forEach(async ({ value }) => {
+		try {
+			await redisRemoveUserFromTrip(tripId, value);
+		} catch (error) {
+			console.log(error);
+		}
+	});
 	await redisDeleteTrip(tripId);
 
 	return updateResult;
