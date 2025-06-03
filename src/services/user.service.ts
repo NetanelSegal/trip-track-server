@@ -48,3 +48,27 @@ export async function updateUser(
 		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
 	}
 }
+
+export async function updateUserProfileImage(
+	userId: string,
+	imageUrl: string
+): Promise<{ updatedUser: Types['User']['Model']; lastImageUrl: string } | null> {
+	try {
+		const user = await getUserById(userId);
+		if (!user) {
+			throw new AppError('User not found', 'User not found', 404, 'MongoDB');
+		}
+
+		const lastImageUrl = user.imageUrl;
+
+		const updatedUser = await updateUser(userId, { imageUrl });
+		if (!updatedUser) {
+			throw new AppError('User not found', 'User not found', 404, 'MongoDB');
+		}
+
+		return { updatedUser, lastImageUrl };
+	} catch (error) {
+		if (error instanceof AppError) throw error;
+		throw new AppError(error.name, error.message, error.statusCode || 500, 'MongoDB');
+	}
+}

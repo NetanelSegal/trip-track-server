@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import { getUserById, updateUser } from '../services/user.service';
+import { getUserById, updateUser, updateUserProfileImage } from '../services/user.service';
 import { RequestJWTPayload } from '../types';
 import { Types } from 'trip-track-package';
 import { AppError } from '../utils/AppError';
 import axios from 'axios';
+import { s3Service } from '../services/S3.service';
+import { Logger } from '../utils/Logger';
 
 export const getUserProfile = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -26,6 +28,42 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
 			return;
 		}
 		res.json(updatedUser);
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const updateProfileImage = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const userId = (req as RequestJWTPayload).user._id;
+		const { file } = req;
+
+		if (!file) {
+			throw new AppError('File not found', 'File not found', 404, 'File');
+		}
+
+		const fileLocation = (await s3Service.uploadFile(file.path, file.filename, file.mimetype)).Location;
+
+		const { updatedUser, lastImageUrl } = await updateUserProfileImage(userId, fileLocation);
+
+		if (!updatedUser) {
+			await s3Service.deleteFile(fileLocation);
+			res.status(404).json({ message: 'User not found or could not be updated' });
+			return;
+		}
+
+		const url = new URL(lastImageUrl);
+		const s3Key = decodeURIComponent(url.pathname.substring(1));
+
+		try {
+			await s3Service.getFile(s3Key);
+			await s3Service.deleteFile(s3Key);
+			Logger.info(`File ${s3Key} deleted successfully`);
+		} catch (error) {
+			Logger.info(`File ${s3Key} is not from our server`);
+		}
+
+		res.json({ updatedUser, lastImageUrl });
 	} catch (error) {
 		next(error);
 	}
