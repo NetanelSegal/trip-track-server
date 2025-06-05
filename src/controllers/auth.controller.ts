@@ -71,7 +71,7 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 				user: {
 					_id: user._id.toString(),
 					email,
-					role: 'user',
+					role: user.role,
 					...(user.name && user.imageUrl ? { name: user.name, imageUrl: user.imageUrl } : {}),
 				},
 				updatedAt: user.updatedAt,
