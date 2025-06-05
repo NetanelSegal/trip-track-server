@@ -23,6 +23,8 @@ import {
 	redisGetUsersInTripExperinceRange,
 	redisIncrementTripCurrentExpIndex,
 	redisInitUsersInTripExpRange,
+	redisRemoveUserFromSets,
+	redisAddUserToTrip,
 } from './trip.service';
 
 export const createSocket = (server: http.Server): SocketServer => {
@@ -39,6 +41,9 @@ export const createSocket = (server: http.Server): SocketServer => {
 
 export const socketInit = (io: SocketServer): void => {
 	io.on('connection', (socket: SocketType) => {
+		const { userId, tripId } = socket.handshake.query;
+		socket.data.userId = userId;
+		socket.data.tripId = tripId;
 		Logger.info(`A user connected with id: ${socket.id}`);
 
 		socketEventValidator(socket);
@@ -47,6 +52,7 @@ export const socketInit = (io: SocketServer): void => {
 		socket.on('joinTrip', async (tripId, userId) => {
 			socket.join(tripId);
 			const user = await redisGetUserTripData(tripId, userId);
+			await redisAddUserToTrip(tripId, { userId, name: user.name, imageUrl: user.imageUrl });
 			socket.to(tripId).emit('tripJoined', { userId, ...user });
 			Logger.info(`User ${socket.id} joined trip room: ${tripId}`);
 		});
@@ -122,8 +128,11 @@ export const socketInit = (io: SocketServer): void => {
 			io.to(tripId).emit('finishedTrip', tripId);
 		});
 
-		socket.on('disconnect', () => {
-			Logger.info(`A user disconnected with id: ${socket.id}`);
+		socket.on('disconnect', async () => {
+			const { tripId, userId } = socket.data;
+			Logger.info(`A user disconnected with id: ${userId} from trip room: ${tripId}`);
+			await redisRemoveUserFromSets(tripId, userId);
+			io.to(tripId).emit('userDisconnected', userId);
 		});
 
 		socket.on('error', (error: Error) => {
