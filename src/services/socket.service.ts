@@ -117,6 +117,11 @@ export const socketInit = (io: SocketServer): void => {
 			io.to(tripId).emit('messageSent', message, userId);
 		});
 
+		socketDataValidator(socket, 'tripFinished', socketDataSchema.tripFinished);
+		socket.on('tripFinished', (tripId) => {
+			io.to(tripId).emit('finishedTrip', tripId);
+		});
+
 		socket.on('disconnect', () => {
 			Logger.info(`A user disconnected with id: ${socket.id}`);
 		});
