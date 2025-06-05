@@ -374,6 +374,20 @@ export const redisAddUserToTrip: TripService['redisAddUserToTrip'] = async (trip
 	return userTripData;
 };
 
+export const redisRemoveUserFromSets: TripService['redisRemoveUserFromTrip'] = async (tripId, userId) => {
+	const leaderboardKey = `trip_leaderboard:${tripId}`;
+	const tripExperiencesKey = `usersInExperinceRange:${tripId}`;
+	console.log('tripId', tripId, 'userId', userId);
+
+	const res = await RedisCache.removeFromSortedSet(leaderboardKey, userId);
+	if (res === 0) throw new AppError('TripRedisError', "Couldn't delete user data from redis set");
+
+	const resHash = await RedisCache.removeHashKeyFromHash(tripExperiencesKey, userId);
+	if (!resHash) throw new AppError('TripRedisError', "Couldn't delete user data from redis hash");
+
+	return true;
+};
+
 export const redisRemoveUserFromTrip: TripService['redisRemoveUserFromTrip'] = async (tripId, userId) => {
 	const userKey = `trip_user:${tripId}:${userId}`;
 	const leaderboardKey = `trip_leaderboard:${tripId}`;
