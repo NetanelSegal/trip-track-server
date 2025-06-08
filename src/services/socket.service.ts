@@ -59,11 +59,12 @@ export const socketInit = (io: SocketServer): void => {
 
 		socketDataValidator(socket, 'updateLocation', socketDataSchema.updateLocation);
 		socket.on('updateLocation', (tripId, location) => {
-			socket.to(tripId).emit('locationUpdated', socket.id, location);
+			const { userId } = socket.data;
+			socket.to(tripId).emit('locationUpdated', userId, location);
 		});
 
 		socket.on('currentUserOutOfTripRoute', (tripId, userId) => {
-			socket.to(tripId).emit('userIsOutOfTripRoute', userId);
+			io.to(tripId).emit('userIsOutOfTripRoute', userId);
 		});
 
 		socketDataValidator(socket, 'userInExperience', socketDataSchema.userInExperience);
@@ -129,10 +130,14 @@ export const socketInit = (io: SocketServer): void => {
 		});
 
 		socket.on('disconnect', async () => {
-			const { tripId, userId } = socket.data;
-			Logger.info(`A user disconnected with id: ${userId} from trip room: ${tripId}`);
-			await redisRemoveUserFromSets(tripId, userId);
-			io.to(tripId).emit('userDisconnected', userId);
+			try {
+				const { tripId, userId } = socket.data;
+				Logger.info(`A user disconnected with id: ${userId} from trip room: ${tripId}`);
+				await redisRemoveUserFromSets(tripId, userId);
+				io.to(tripId).emit('userDisconnected', userId);
+			} catch (error) {
+				Logger.error(error);
+			}
 		});
 
 		socket.on('error', (error: Error) => {
