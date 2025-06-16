@@ -53,7 +53,7 @@ export const socketInit = (io: SocketServer): void => {
 			socket.join(tripId);
 			const user = await redisGetUserTripData(tripId, userId);
 			await redisAddUserToTrip(tripId, { userId, name: user.name, imageUrl: user.imageUrl });
-			socket.to(tripId).emit('tripJoined', { userId, ...user });
+			io.to(tripId).emit('tripJoined', { userId, ...user });
 			Logger.info(`User ${socket.id} joined trip room: ${tripId}`);
 		});
 
