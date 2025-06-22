@@ -8,6 +8,7 @@ import { googleRouter } from './google.route';
 import { userRouter } from './user.route';
 import { uploadRouter } from './upload.route';
 import { devRouter } from './dev.route';
+import { mapRouter } from './map.route';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use('/auth', authRouter);
 router.use('/trip', tripRouter);
 router.use('/user', userRouter);
 router.use('/upload', uploadRouter);
+router.use('/map', mapRouter);
 
 // Developer routes (only in development)
 if (ENV === 'development') {
