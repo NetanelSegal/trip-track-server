@@ -19,6 +19,7 @@ import {
 	endTrip,
 	getTripCurrentExpIndex,
 	updeteGuideInTrip,
+	getAllUserIdsRelatedToTrip,
 } from '../controllers/trip.controller';
 import { validateRequest } from '../middlewares/validatorRequest';
 import { Schemas } from 'trip-track-package';
@@ -44,6 +45,13 @@ router.get(
 	validateRequest(Schemas.mongoObjectId, 'params'),
 	authenticateToken({ allowGuest: true }),
 	getAllUsersTripData
+);
+
+router.get(
+	'/users-id/:id',
+	validateRequest(Schemas.mongoObjectId, 'params'),
+	authenticateToken({ allowGuest: true }),
+	getAllUserIdsRelatedToTrip
 );
 
 router.get(
