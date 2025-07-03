@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 
-config();
+const env = process.env.NODE_ENV === 'production' ? '' : '.development';
+config({ path: `.env${env}` });
 
 export const ENV = process.env.NODE_ENV ?? 'development';
 export const MONGO_URL = process.env.MONGO_URL ?? '';

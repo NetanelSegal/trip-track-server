@@ -4,3 +4,32 @@ services:
     container_name: redis_c
     ports:
       - 6379:6379
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: triptrack_server
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+    container_name: triptrack_client
+    ports:
+      - 5173:5173
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - server
+    restart: unless-stopped
