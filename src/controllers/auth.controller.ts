@@ -92,7 +92,7 @@ export const createGuestToken = async (req: Request, res: Response) => {
 			httpOnly: true,
 			secure: ENV === 'production',
 			sameSite: 'strict',
-			maxAge: 15 * 60 * 1000,
+			maxAge: 15 * 60 * 60 * 1000,
 		})
 		.status(200)
 		.json({
@@ -111,7 +111,7 @@ export const updateGuestInfoToken = async (req: Request, res: Response) => {
 			httpOnly: true,
 			secure: ENV === 'production',
 			sameSite: 'strict',
-			maxAge: 15 * 60 * 1000,
+			maxAge: 15 * 60 * 60 * 1000,
 		})
 		.status(200)
 		.json({

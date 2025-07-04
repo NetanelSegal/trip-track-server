@@ -10,10 +10,14 @@ export const getDirectionsRoute = async (req: Request, res: Response, next: Next
 		const data = await RedisCache.getSetValue({
 			key: `mapbox_route:${points}:${language}`,
 			callbackFn: async () => {
-				const { data } = await axios(
-					`https://api.mapbox.com/directions/v5/mapbox/walking/${points}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}&steps=true&overview=full&language=${language}`
-				);
-				return data;
+				try {
+					const { data } = await axios(
+						`https://api.mapbox.com/directions/v5/mapbox/walking/${points}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}&steps=true&overview=full&language=${language}`
+					);
+					return data;
+				} catch (error) {
+					throw error;
+				}
 			},
 			expirationTime: 60 * 20,
 		});

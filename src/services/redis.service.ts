@@ -73,12 +73,11 @@ class RedisDAL {
 			await this.ensureConnected();
 			const redisData = await this.redisClient.GET(key);
 			if (redisData) return JSON.parse(redisData) as T;
-
 			const newValue = await callbackFn();
 			await this.redisClient.SETEX(key, expirationTime, JSON.stringify(newValue));
 			return newValue;
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -88,7 +87,7 @@ class RedisDAL {
 			const redisData = await this.redisClient.GET(key);
 			return redisData ? (JSON.parse(redisData) as T) : null;
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -98,7 +97,7 @@ class RedisDAL {
 			const value = await callbackFn();
 			return await this.redisClient.SETEX(key, expirationTime, JSON.stringify(value));
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -107,7 +106,7 @@ class RedisDAL {
 			await this.ensureConnected();
 			return await this.redisClient.SETEX(key, expirationTime, JSON.stringify(value));
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -116,7 +115,7 @@ class RedisDAL {
 			await this.ensureConnected();
 			return await this.redisClient.DEL(key);
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -125,7 +124,7 @@ class RedisDAL {
 			await this.ensureConnected();
 			return await this.redisClient.zAdd(key, member);
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -135,7 +134,7 @@ class RedisDAL {
 			return await this.redisClient.zRem(key, member);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -147,7 +146,7 @@ class RedisDAL {
 				value: member,
 			});
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -159,7 +158,7 @@ class RedisDAL {
 			});
 			return members;
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -168,7 +167,7 @@ class RedisDAL {
 			await this.ensureConnected();
 			await this.redisClient.hSet(redisKey, hashKey, JSON.stringify(value));
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -184,7 +183,7 @@ class RedisDAL {
 			return { [hashKey]: JSON.parse(deletedValue) as T };
 		} catch (error) {
 			if (error instanceof AppError) throw error;
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -193,7 +192,7 @@ class RedisDAL {
 			await this.ensureConnected();
 			await this.redisClient.hSet(redisKey, hashKey, JSON.stringify(value));
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -206,7 +205,7 @@ class RedisDAL {
 			}
 			await multi.exec();
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 
@@ -222,7 +221,7 @@ class RedisDAL {
 
 			return result;
 		} catch (error) {
-			throw new AppError(error.name, error.message, 500, 'Redis');
+			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
 }
