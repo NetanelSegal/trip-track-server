@@ -1,26 +1,28 @@
-import { EMAIL_PASS, EMAIL_USER } from '../env.config';
-import sgMail, { ClientResponse } from '@sendgrid/mail';
 import { AppError } from '../utils/AppError';
+import emailjs, { EmailJSResponseStatus } from '@emailjs/nodejs';
+import { EMAIL_JS_PRIVATE_KEY, EMAIL_JS_PUBLIC_KEY } from '../env.config';
 
-sgMail.setApiKey(EMAIL_PASS);
+emailjs.init({
+	privateKey: EMAIL_JS_PRIVATE_KEY,
+	publicKey: EMAIL_JS_PUBLIC_KEY,
+});
 
 interface ISendMailOptions {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
+	to: string;
+	code: string;
 }
 
-export const sendEmail = async (
-  options: ISendMailOptions
-): Promise<[ClientResponse, {}]> => {
-  try {
-    const res = await sgMail.send({
-      from: EMAIL_USER,
-      ...options,
-    });
-    return res;
-  } catch (error) {
-    throw new AppError(error.name, error.message, 500, 'sgMail');
-  }
+export const sendEmail = async ({ to, code }: ISendMailOptions): Promise<EmailJSResponseStatus> => {
+	try {
+		const templateParams = {
+			email: to,
+			code,
+		};
+
+		const res = await emailjs.send('service_ty0viwh', 'template_mc4enbd', templateParams);
+
+		return res;
+	} catch (error) {
+		throw new AppError(error.name, error.message, error.status, 'emailjs');
+	}
 };
