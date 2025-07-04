@@ -1,0 +1,29 @@
+# Node modules (you install them inside the container)
+node_modules
+
+# Environment variables
+.env
+.env.*  # in case you use .env.dev, .env.prod, etc.
+
+# Logs
+logs
+*.log
+
+# OS/system/editor junk
+.DS_Store
+Thumbs.db
+.vscode
+*.swp
+
+# Git
+.git
+.gitignore
+
+# Docker/meta files
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Build artifacts (if any)
+dist
+build

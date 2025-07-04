@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 
-config();
+const env = process.env.NODE_ENV === 'production' ? '' : '.development';
+config({ path: `.env${env}` });
 
 export const ENV = process.env.NODE_ENV ?? 'development';
 export const MONGO_URL = process.env.MONGO_URL ?? '';
@@ -16,3 +17,5 @@ export const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME ?? '';
 export const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY ?? '';
 export const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY ?? '';
 export const MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN ?? '';
+export const EMAIL_JS_PRIVATE_KEY = process.env.EMAIL_JS_PRIVATE_KEY ?? '';
+export const EMAIL_JS_PUBLIC_KEY = process.env.EMAIL_JS_PUBLIC_KEY ?? '';
