@@ -15,7 +15,7 @@ const app = express();
 app.use(cookieParser());
 app.use(
 	cors({
-		origin: true,
+		origin: 'https://trip-track-pro.onrender.com',
 		credentials: true,
 	})
 );
