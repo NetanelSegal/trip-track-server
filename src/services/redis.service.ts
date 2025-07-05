@@ -224,6 +224,22 @@ class RedisDAL {
 			throw new AppError(error.name, error.message, error.status || 500, 'Redis');
 		}
 	}
+
+	async scanKeys(pattern: string): Promise<string[]> {
+		let cursor = 0;
+		const keys: string[] = [];
+
+		do {
+			const reply = await this.redisClient.scan(cursor, {
+				MATCH: pattern,
+				COUNT: 100,
+			});
+			cursor = reply.cursor;
+			keys.push(...reply.keys);
+		} while (cursor !== 0);
+
+		return keys;
+	}
 }
 
 const RedisCache = new RedisDAL();

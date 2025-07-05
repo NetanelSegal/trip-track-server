@@ -546,6 +546,18 @@ export const redisIncrementTripCurrentExpIndex: TripService['redisIncrementTripC
 	return updatedIndex;
 };
 
+export async function redisGetAllUserIdsRelatedToTrip(tripId: string): Promise<string[]> {
+	const pattern = `trip_user:${tripId}:*`;
+	const keys = await RedisCache.scanKeys(pattern);
+
+	const userIds = keys.map((key) => {
+		const parts = key.split(':');
+		return parts[2];
+	});
+
+	return userIds;
+}
+
 // redis and mongo
 export const startTripMongoAndRedis: TripService['startTripMongoAndRedis'] = async (tripId, userId) => {
 	try {
