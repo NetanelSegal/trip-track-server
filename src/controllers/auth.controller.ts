@@ -57,13 +57,13 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 			.cookie('accessToken', accessToken, {
 				httpOnly: true,
 				secure: ENV === 'production',
-				sameSite: 'strict',
+				sameSite: 'none',
 				maxAge: 15 * 60 * 1000,
 			})
 			.cookie('refreshToken', refreshToken, {
 				httpOnly: true,
 				secure: ENV === 'production',
-				sameSite: 'strict',
+				sameSite: 'none',
 				maxAge: 7 * 24 * 60 * 60 * 1000,
 			})
 			.status(200)
@@ -91,7 +91,7 @@ export const createGuestToken = async (req: Request, res: Response) => {
 		.cookie('guestToken', guestToken, {
 			httpOnly: true,
 			secure: ENV === 'production',
-			sameSite: 'strict',
+			sameSite: 'none',
 			maxAge: 15 * 60 * 60 * 1000,
 		})
 		.status(200)
@@ -110,7 +110,7 @@ export const updateGuestInfoToken = async (req: Request, res: Response) => {
 		.cookie('guestToken', guestToken, {
 			httpOnly: true,
 			secure: ENV === 'production',
-			sameSite: 'strict',
+			sameSite: 'none',
 			maxAge: 15 * 60 * 60 * 1000,
 		})
 		.status(200)
@@ -154,13 +154,13 @@ export const generateUserTokens = async (req: Request, res: Response, next: Next
 			.cookie('accessToken', accessToken, {
 				httpOnly: true,
 				secure: ENV === 'production',
-				sameSite: 'strict',
+				sameSite: 'none',
 				maxAge: 15 * 60 * 1000,
 			})
 			.cookie('refreshToken', refreshToken, {
 				httpOnly: true,
 				secure: ENV === 'production',
-				sameSite: 'strict',
+				sameSite: 'none',
 				maxAge: 7 * 24 * 60 * 60 * 1000,
 			})
 			.status(200)

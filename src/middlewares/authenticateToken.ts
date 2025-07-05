@@ -46,7 +46,7 @@ export const authenticateToken = ({ allowGuest = false }: { allowGuest?: boolean
 					res.cookie('accessToken', newAccessToken, {
 						httpOnly: true,
 						secure: true,
-						sameSite: 'strict',
+						sameSite: 'none',
 						maxAge: 15 * 60 * 1000,
 					});
 
