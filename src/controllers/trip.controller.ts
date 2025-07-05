@@ -289,8 +289,6 @@ export const updeteGuideInTrip = async (req: Request, res: Response, next: NextF
 export const getAllUserIdsRelatedToTrip = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const userIds = await redisGetAllUserIdsRelatedToTrip(req.params.id);
-		console.log('userIds', userIds);
-
 		res.status(200).json(userIds);
 	} catch (error) {
 		next(error);
