@@ -31,7 +31,7 @@ export const createSocket = (server: http.Server): SocketServer => {
 	const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>(server, {
 		cors: {
 			methods: ['GET', 'POST'],
-			origin: ['http://localhost:5173'],
+			origin: '*',
 			credentials: true,
 		},
 	});

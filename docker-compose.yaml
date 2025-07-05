@@ -2,6 +2,8 @@ services:
   redis:
     image: redis
     container_name: redis_c
+    volumes:
+      - redis_data:/data
     ports:
       - 6379:6379
 
@@ -33,3 +35,6 @@ services:
     depends_on:
       - server
     restart: unless-stopped
+
+volumes:
+  redis_data:
