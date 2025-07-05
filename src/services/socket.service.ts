@@ -26,12 +26,13 @@ import {
 	redisRemoveUserFromSets,
 	redisAddUserToTrip,
 } from './trip.service';
+import { FRONT_END_MAIN_URL } from '../env.config';
 
 export const createSocket = (server: http.Server): SocketServer => {
 	const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>(server, {
 		cors: {
 			methods: ['GET', 'POST'],
-			origin: '*',
+			origin: FRONT_END_MAIN_URL,
 			credentials: true,
 		},
 	});

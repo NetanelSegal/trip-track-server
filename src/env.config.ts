@@ -22,3 +22,4 @@ export const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY ?? '';
 export const MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN ?? '';
 export const EMAIL_JS_PRIVATE_KEY = process.env.EMAIL_JS_PRIVATE_KEY ?? '';
 export const EMAIL_JS_PUBLIC_KEY = process.env.EMAIL_JS_PUBLIC_KEY ?? '';
+export const FRONT_END_MAIN_URL = process.env.FRONT_END_MAIN_URL ?? 'http://localhost:5173';

@@ -6,6 +6,7 @@ import './db/mongo-connect';
 import { indexRouter } from './routes/index.route';
 import { Logger } from './utils/Logger';
 import { createSocket, socketInit } from './services/socket.service';
+import { FRONT_END_MAIN_URL } from './env.config';
 
 const PORT = process.env.PORT || 3000;
 
@@ -15,7 +16,7 @@ const app = express();
 app.use(cookieParser());
 app.use(
 	cors({
-		origin: 'https://trip-track-pro.onrender.com',
+		origin: FRONT_END_MAIN_URL,
 		credentials: true,
 	})
 );
