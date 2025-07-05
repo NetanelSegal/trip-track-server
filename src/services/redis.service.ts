@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
-import { REDIS_URL } from '../env.config';
+import { REDIS_URL, REDIS_USERNAME, REDIS_PASSWORD, REDIS_PORT, ENV } from '../env.config';
 import { Logger } from '../utils/Logger';
 import { AppError } from '../utils/AppError';
 
@@ -31,12 +31,26 @@ class RedisDAL {
 	private redisClient: RedisClientType;
 
 	constructor() {
-		this.redisClient = createClient({
-			socket: {
-				reconnectStrategy: (attempts) => Math.min(attempts * 1000, 5000),
-			},
-			url: REDIS_URL,
-		});
+		const reconnectStrategy = (attempts: number) => Math.min(attempts * 1000, 5000);
+
+		if (ENV === 'production') {
+			this.redisClient = createClient({
+				username: REDIS_USERNAME,
+				password: REDIS_PASSWORD,
+				socket: {
+					host: REDIS_URL,
+					port: Number(REDIS_PORT),
+					reconnectStrategy,
+				},
+			});
+		} else {
+			this.redisClient = createClient({
+				socket: {
+					reconnectStrategy,
+				},
+				url: REDIS_URL,
+			});
+		}
 
 		this.connect().catch((error) => Logger.error(error));
 
