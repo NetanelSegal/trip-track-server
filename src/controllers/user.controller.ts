@@ -86,17 +86,17 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
 		res.clearCookie('accessToken', {
 			httpOnly: true,
 			secure: process.env.ENV === 'production',
-			sameSite: 'strict',
+			sameSite: 'none',
 		});
 		res.clearCookie('refreshToken', {
 			httpOnly: true,
 			secure: process.env.ENV === 'production',
-			sameSite: 'strict',
+			sameSite: 'none',
 		});
 		res.clearCookie('guestToken', {
 			httpOnly: true,
 			secure: process.env.ENV === 'production',
-			sameSite: 'strict',
+			sameSite: 'none',
 		});
 		res.status(200).json({ message: 'Logged out successfully' });
 	} catch (error) {
