@@ -4,25 +4,27 @@ import { generateAccessToken, verifyToken } from '../utils/jwt.utils';
 import { RequestJWTPayload } from '../types';
 import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, GUEST_TOKEN_SECRET } from '../env.config';
 import { Logger } from '../utils/Logger';
+import { ACCESS_TOKEN_MAX_AGE, getAuthCookieOptions } from '../utils/cookieOptions';
 
 export const authenticateToken = ({ allowGuest = false }: { allowGuest?: boolean } = {}) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const { accessToken, refreshToken, guestToken } = req.cookies;
 
-			if (!allowGuest && guestToken) {
-				throw new AppError('AppError', 'Guests are not allowed', 401, 'authenticateToken');
-			}
-
 			if (guestToken) {
 				const guest = verifyToken(guestToken, GUEST_TOKEN_SECRET);
 
 				if (guest) {
+					if (!allowGuest) {
+						throw new AppError('AppError', 'Guests are not allowed', 401, 'authenticateToken');
+					}
 					Logger.info(`Access token is valid for guest ${guest._id}`);
 					(req as RequestJWTPayload).user = guest;
 					return next();
 				}
-			} else if (accessToken) {
+			}
+
+			if (accessToken) {
 				const user = verifyToken(accessToken, ACCESS_TOKEN_SECRET);
 
 				if (user) {
@@ -43,12 +45,7 @@ export const authenticateToken = ({ allowGuest = false }: { allowGuest?: boolean
 						role: refreshUser.role,
 					});
 
-					res.cookie('accessToken', newAccessToken, {
-						httpOnly: true,
-						secure: true,
-						sameSite: 'none',
-						maxAge: 15 * 60 * 1000,
-					});
+					res.cookie('accessToken', newAccessToken, getAuthCookieOptions(ACCESS_TOKEN_MAX_AGE));
 
 					(req as RequestJWTPayload).user = refreshUser;
 					return next();

@@ -6,6 +6,7 @@ import { AppError } from '../utils/AppError';
 import axios from 'axios';
 import { s3Service } from '../services/S3.service';
 import { Logger } from '../utils/Logger';
+import { getClearAuthCookieOptions } from '../utils/cookieOptions';
 
 export const getUserProfile = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -83,21 +84,9 @@ export const getRandomUserName = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		res.clearCookie('accessToken', {
-			httpOnly: true,
-			secure: process.env.ENV === 'production',
-			sameSite: 'none',
-		});
-		res.clearCookie('refreshToken', {
-			httpOnly: true,
-			secure: process.env.ENV === 'production',
-			sameSite: 'none',
-		});
-		res.clearCookie('guestToken', {
-			httpOnly: true,
-			secure: process.env.ENV === 'production',
-			sameSite: 'none',
-		});
+		res.clearCookie('accessToken', getClearAuthCookieOptions());
+		res.clearCookie('refreshToken', getClearAuthCookieOptions());
+		res.clearCookie('guestToken', getClearAuthCookieOptions());
 		res.status(200).json({ message: 'Logged out successfully' });
 	} catch (error) {
 		next(error);

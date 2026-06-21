@@ -6,6 +6,13 @@ import { RequestJWTPayload } from '../types';
 import { saveUserDataInRedis, sendEmailWithCodeToUser, validateCodeWithRedis } from '../services/auth.service';
 import { ENV } from '../env.config';
 import { Types } from 'trip-track-package';
+import {
+	ACCESS_TOKEN_MAX_AGE,
+	GUEST_TOKEN_MAX_AGE,
+	REFRESH_TOKEN_MAX_AGE,
+	getAuthCookieOptions,
+	getClearAuthCookieOptions,
+} from '../utils/cookieOptions';
 
 const REDIS_EXP_TIME_MIN = 10;
 
@@ -51,21 +58,11 @@ export const verifyCode = async (req: Request, res: Response, next: NextFunction
 			role: user.role,
 		});
 
-		res.clearCookie('guestToken');
+		res.clearCookie('guestToken', getClearAuthCookieOptions());
 
 		res
-			.cookie('accessToken', accessToken, {
-				httpOnly: true,
-				secure: ENV === 'production',
-				sameSite: 'none',
-				maxAge: 15 * 60 * 1000,
-			})
-			.cookie('refreshToken', refreshToken, {
-				httpOnly: true,
-				secure: ENV === 'production',
-				sameSite: 'none',
-				maxAge: 7 * 24 * 60 * 60 * 1000,
-			})
+			.cookie('accessToken', accessToken, getAuthCookieOptions(ACCESS_TOKEN_MAX_AGE))
+			.cookie('refreshToken', refreshToken, getAuthCookieOptions(REFRESH_TOKEN_MAX_AGE))
 			.status(200)
 			.json({
 				user: {
@@ -88,12 +85,7 @@ export const createGuestToken = async (req: Request, res: Response) => {
 	const guestToken = generateGuestToken({ _id: uuid, role: 'guest' });
 
 	res
-		.cookie('guestToken', guestToken, {
-			httpOnly: true,
-			secure: ENV === 'production',
-			sameSite: 'none',
-			maxAge: 15 * 60 * 60 * 1000,
-		})
+		.cookie('guestToken', guestToken, getAuthCookieOptions(GUEST_TOKEN_MAX_AGE))
 		.status(200)
 		.json({
 			message: 'Guest token created successfully',
@@ -107,12 +99,7 @@ export const updateGuestInfoToken = async (req: Request, res: Response) => {
 	const guestToken = generateGuestToken({ _id: uuid, role: 'guest', name, imageUrl });
 
 	res
-		.cookie('guestToken', guestToken, {
-			httpOnly: true,
-			secure: ENV === 'production',
-			sameSite: 'none',
-			maxAge: 15 * 60 * 60 * 1000,
-		})
+		.cookie('guestToken', guestToken, getAuthCookieOptions(GUEST_TOKEN_MAX_AGE))
 		.status(200)
 		.json({
 			message: 'Guest token updated successfully',
@@ -151,18 +138,8 @@ export const generateUserTokens = async (req: Request, res: Response, next: Next
 		});
 
 		res
-			.cookie('accessToken', accessToken, {
-				httpOnly: true,
-				secure: ENV === 'production',
-				sameSite: 'none',
-				maxAge: 15 * 60 * 1000,
-			})
-			.cookie('refreshToken', refreshToken, {
-				httpOnly: true,
-				secure: ENV === 'production',
-				sameSite: 'none',
-				maxAge: 7 * 24 * 60 * 60 * 1000,
-			})
+			.cookie('accessToken', accessToken, getAuthCookieOptions(ACCESS_TOKEN_MAX_AGE))
+			.cookie('refreshToken', refreshToken, getAuthCookieOptions(REFRESH_TOKEN_MAX_AGE))
 			.status(200)
 			.json({
 				user,
